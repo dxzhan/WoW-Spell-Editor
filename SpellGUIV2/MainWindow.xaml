@@ -6,13 +6,12 @@
         xmlns:c="clr-namespace:SpellEditor.Sources.Controls"
         xmlns:c2="clr-namespace:SpellEditor.Sources.Controls.Visual"
         Title="{DynamicResource mainTitle}"
-        Height="750"
+        Height="800"
         Width="1300"
         WindowStartupLocation="CenterScreen"
         Icon="icon.ico"
         KeyDown="_KeyDown"
-        Loaded="_Loaded"
-        SizeChanged="window_SizeChanged">
+        Loaded="_Loaded">
     <controls:MetroWindow.Resources>
         <ResourceDictionary>
             <Style TargetType="c:ThreadSafeComboBox" BasedOn="{StaticResource {x:Type ComboBox}}"/>
@@ -37,6 +36,7 @@
                         <RowDefinition Height="AUTO"/>
                         <RowDefinition Height="AUTO"/>
                         <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -52,8 +52,10 @@
                     <c:ThreadSafeTextBox x:Name="NavigateToSpell" HorizontalAlignment="Left" Margin="5" Width="100" TextWrapping="Wrap" KeyDown="_KeyDown" Grid.Row="0"  Grid.Column="3"/>
                     <Label Content="{DynamicResource labFilterBtName}" Margin="5" Grid.Row="1" Grid.Column="2"/>
                     <c:ThreadSafeTextBox x:Name="FilterSpellNames" HorizontalAlignment="Left" Margin="5" Width="200" TextWrapping="NoWrap" KeyDown="_KeyDown" KeyUp="_KeyUp" Grid.Row="1" Grid.Column="3"/>
-                    <Label Content="Filter by Spell Effect:" Margin="5" Grid.Row="2" Grid.Column="2"/>
-                    <c:FilteredComboBox x:Name="FilterSpellEffectCombo" Margin="5" Width="250" Grid.Row="2" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labFilterByEffect}" Margin="5" Grid.Row="2" Grid.Column="2"/>
+                    <c:ThreadSafeComboBox x:Name="FilterSpellEffectCombo" Margin="5" Width="250" Grid.Row="2" Grid.Column="3" SelectionChanged="FilterSpellEffectCombo_SelectionChanged"/>
+                    <Label Content="{DynamicResource labFilterByAura}" Margin="5" Grid.Row="3" Grid.Column="2"/>
+                    <c:ThreadSafeComboBox x:Name="FilterAuraCombo" Margin="5" Width="250" Grid.Row="3" Grid.Column="3" SelectionChanged="FilterAuraCombo_SelectionChanged"/>
                     <ListBox Name="SelectSpell"
                              Margin="10,10,0,10"
                              VirtualizingStackPanel.IsVirtualizing="True"
@@ -63,10 +65,10 @@
                              SelectionChanged="SelectSpell_SelectionChanged"
                              Focusable="False"
                              Grid.Row="0"
-                             Grid.RowSpan="5"
+                             Grid.RowSpan="6"
                              Grid.Column="0"
                              Grid.ColumnSpan="2"/>
-                    <TabControl Margin="5,5,5,5" Grid.Row="3" Grid.RowSpan="5" Grid.Column="2" Grid.ColumnSpan="4">
+                    <TabControl Margin="5,5,5,5" Grid.Row="4" Grid.RowSpan="5" Grid.Column="2" Grid.ColumnSpan="4">
                         <TabItem x:Name="TabItem_English" Header="{DynamicResource tabEnglish}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -635,121 +637,181 @@
             </TabItem>
             <TabItem Header="{DynamicResource Items}">
                 <Grid>
-                    <Label Content="{DynamicResource labItemTool1}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="90,35,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Totem1" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="68,61,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labItemTool2}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="90,97,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Totem2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="68,123,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent1}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="85,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent1" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="58,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent2}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="225,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="198,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent3}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="365,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent3" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="338,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent4}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="505,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent4" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="478,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent5}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="647,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent5" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="620,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent6}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="787,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent6" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="760,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent7}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="927,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent7" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="900,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagent8}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="1067,371,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="Reagent8" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="1040,397,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount1}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="67,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount1" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="58,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount2}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="207,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount2" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="198,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount3}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="347,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount3" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="338,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount4}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="487,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount4" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="478,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount5}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="629,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount5" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="620,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount6}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="769,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount6" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="760,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount7}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="909,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount7" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="900,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labReagentCount8}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="1049,445,0,0"/>
-                    <c:ThreadSafeTextBox x:Name="ReagentCount8" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="1040,471,0,0" Width="120" TextWrapping="Wrap"/>
-                    <Label Content="{DynamicResource labEquippedItemClass}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="339,35,0,0"/>
-                    <c:ThreadSafeComboBox x:Name="EquippedItemClass" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="339,61,0,0" Width="120" SelectionChanged="ComboBox_SelectionChanged"/>
-                    <Label Content="{DynamicResource labEquippedItemInventoryType}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="964,35,0,0"/>
-                    <ScrollViewer Margin="909,61,99,346">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="{DynamicResource labItemTool1}" Margin="5" Grid.Row="0" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Totem1" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="0" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labItemTool2}" Margin="5" Grid.Row="1" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Totem2" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1"/>
+
+                    <Label Content="{DynamicResource labEquippedItemClass}" Margin="5" Grid.Row="0" Grid.Column="2"/>
+                    <c:ThreadSafeComboBox x:Name="EquippedItemClass" Margin="5" SelectionChanged="ComboBox_SelectionChanged" Grid.Row="0" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labEquippedItemInventoryType}" HorizontalAlignment="Center" Margin="5,5,5,5" Grid.Row="0" Grid.Column="4"/>
+                    <ScrollViewer Margin="10,10,10,10" Grid.Row="1" Grid.RowSpan="10" Grid.Column="4" MinWidth="200">
                         <StackPanel Name="EquippedItemInventoryTypeGrid" IsEnabled="False"/>
                     </ScrollViewer>
-                    <ScrollViewer Margin="607,61,413,346">
+                    <Label Content="{DynamicResource labEquippedItemSubClass}" HorizontalAlignment="Center" Margin="5,5,5,5" Grid.Row="0" Grid.Column="5"/>
+                    <ScrollViewer Margin="10,10,10,10" Grid.Row="1" Grid.RowSpan="10" Grid.Column="5" MinWidth="200">
                         <StackPanel x:Name="EquippedItemSubClassGrid" IsEnabled="False"/>
                     </ScrollViewer>
-                    <Label Content="{DynamicResource labEquippedItemSubClass}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="666,35,0,0"/>
+
+                    <Label Content="{DynamicResource labReagent1}" Margin="5" Grid.Row="2" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent1" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="2" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagent2}" Margin="5" Grid.Row="3" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent2" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="3" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagent3}" Margin="5" Grid.Row="4" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent3" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="4" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagent4}" Margin="5" Grid.Row="5" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent4" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="5" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagent5}" Margin="5" Grid.Row="6" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent5" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="6" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagent6}" Margin="5" Grid.Row="7" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent6" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="7" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagent7}" Margin="5" Grid.Row="8" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent7" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="8" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagent8}" Margin="5" Grid.Row="9" Grid.Column="0"/>
+                    <c:ThreadSafeTextBox x:Name="Reagent8" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="9" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labReagentCount1}" Margin="5" Grid.Row="2" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount1" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="2" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labReagentCount2}" Margin="5" Grid.Row="3" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount2" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="3" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labReagentCount3}" Margin="5" Grid.Row="4" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount3" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="4" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labReagentCount4}" Margin="5" Grid.Row="5" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount4" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="5" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labReagentCount5}" Margin="5" Grid.Row="6" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount5" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="6" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labReagentCount6}" Margin="5" Grid.Row="7" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount6" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="7" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labReagentCount7}" Margin="5" Grid.Row="8" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount7" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="8" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labReagentCount8}" Margin="5" Grid.Row="9" Grid.Column="2"/>
+                    <c:ThreadSafeTextBox x:Name="ReagentCount8" Margin="5" Width="120" TextWrapping="Wrap" Grid.Row="9" Grid.Column="3"/>
                 </Grid>
             </TabItem>
             <TabItem Header="{DynamicResource Flags}">
                 <Grid>
-                    <TabControl VerticalAlignment="Top" HorizontalAlignment="Left" Height="647" Width="1264">
+                    <TabControl VerticalAlignment="Top" HorizontalAlignment="Left">
                         <TabItem Header="{DynamicResource Interrupts}">
                             <Grid>
-                                <Label Content="{DynamicResource labInterruptFlags}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="125,10,0,0"/>
-                                <ScrollViewer Margin="10,36,934,0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Content="{DynamicResource labInterruptFlags}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="0"/>
+                                <ScrollViewer Margin="10" ScrollViewer.VerticalScrollBarVisibility="Disabled" Grid.Row="1" Grid.Column="0">
                                     <StackPanel Name="InterruptFlagsGrid"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labAuraInterruptFlags}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="495,10,0,0"/>
-                                <ScrollViewer Margin="395,36,549,0">
+                                <Label Content="{DynamicResource labAuraInterruptFlags}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="1"/>
+                                <ScrollViewer Margin="30,10,10,10" Grid.Row="1" Grid.Column="1">
                                     <StackPanel Name="AuraInterruptFlagsGrid"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labChannelInterruptFlags}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="892,10,0,0"/>
-                                <ScrollViewer Margin="799,36,145,100" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                <Label Content="{DynamicResource labChannelInterruptFlags}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="2"/>
+                                <ScrollViewer Margin="30,10,10,10" ScrollViewer.VerticalScrollBarVisibility="Disabled" Grid.Row="1" Grid.Column="2">
                                     <StackPanel Name="ChannelInterruptFlagsGrid"/>
                                 </ScrollViewer>
                             </Grid>
                         </TabItem>
                         <TabItem Header="{DynamicResource Attributes}">
                             <Grid Name="AttributesTabGrid">
-                                <Label Content="{DynamicResource labAttributes}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="92,8,0,0"/>
-                                <ScrollViewer Margin="10,35,939,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Content="{DynamicResource labAttributes}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="0"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="0">
                                     <StackPanel Name="Attributes1"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labAttributesEx}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="400,8,0,0"/>
-                                <ScrollViewer Margin="326,35,627,10">
+                                <Label Content="{DynamicResource labAttributesEx}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="1"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="1">
                                     <StackPanel Name="Attributes2"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labAttributesEx2}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="710,8,0,0"/>
-                                <ScrollViewer Margin="638,35,310,10">
+                                <Label Content="{DynamicResource labAttributesEx2}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="2"/>
+                                <ScrollViewer Margin="10" MaxWidth="300" Grid.Row="1" Grid.Column="2">
                                     <StackPanel Name="Attributes3"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labAttributesEx3}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="1027,9,0,0"/>
-                                <ScrollViewer Margin="955,35,10,10">
+                                <Label Content="{DynamicResource labAttributesEx3}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="3"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="3">
                                     <StackPanel Name="Attributes4"/>
                                 </ScrollViewer>
                             </Grid>
                         </TabItem>
                         <TabItem Header="{DynamicResource Attributes2}">
                             <Grid Name="Attributes2TabGrid">
-                                <Label Content="{DynamicResource labAttributesEx4}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="83,9,0,0"/>
-                                <ScrollViewer Margin="10,35,940,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Content="{DynamicResource labAttributesEx4}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="0"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="0">
                                     <StackPanel x:Name="Attributes5"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labAttributesEx5}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="397,9,0,0"/>
-                                <ScrollViewer Margin="325,35,627,10">
+                                <Label Content="{DynamicResource labAttributesEx5}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="1"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="1">
                                     <StackPanel x:Name="Attributes6"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labAttributesEx6}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="708,9,0,0"/>
-                                <ScrollViewer Margin="638,35,310,10">
+                                <Label Content="{DynamicResource labAttributesEx6}"  HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="2"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="2">
                                     <StackPanel x:Name="Attributes7"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labAttributesEx7}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="1025,9,0,0"/>
-                                <ScrollViewer Margin="955,35,10,10">
+                                <Label Content="{DynamicResource labAttributesEx7}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="3"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="3">
                                     <StackPanel x:Name="Attributes8"/>
                                 </ScrollViewer>
                             </Grid>
                         </TabItem>
                         <TabItem Header="{DynamicResource Misc}">
                             <Grid>
-                                <Label Content="{DynamicResource labCreatureType}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="174.5,49,0,0"/>
-                                <ScrollViewer Margin="62,75,882,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Content="{DynamicResource labCreatureType}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="0"/>
+                                <ScrollViewer Margin="10" Grid.Row="1" Grid.Column="0">
                                     <StackPanel Name="TargetCreatureType"/>
                                 </ScrollViewer>
-                                <Label Content="{DynamicResource labStances}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="569.5,49,0,0"/>
-                                <ScrollViewer Margin="440,75,504,10">
+                                <Label Content="{DynamicResource labStances}" HorizontalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="1"/>
+                                <ScrollViewer Margin="30,10,10,10" Grid.Row="1" Grid.Column="1">
                                     <StackPanel Name="StancesGrid"/>
                                 </ScrollViewer>
                             </Grid>
@@ -759,147 +821,226 @@
             </TabItem>
             <TabItem Name="IconTab" Header="{DynamicResource Icon}">
                 <Grid>
-                    <Label Content="{DynamicResource labCurrentIcon}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="4,48,0,0" Grid.Column="1" Grid.ColumnSpan="2"/>
-                    <Grid Name="CurrentIconGrid"/>
-                    <Image Name="CurrentIcon" Margin="77.907,44,1114,614" Height="64" Width="64" Grid.Column="2"/>
-                    <Label Content="{DynamicResource labNewIcon}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="197.907,48,0,0" Grid.Column="2"/>
-                    <Grid Name="NewIconGrid"/>
-                    <ScrollViewer Name="IconScrollViewer" Margin="4,113,89,57" Grid.Column="1" Grid.ColumnSpan="2" >
-                        <WrapPanel Name="IconGrid" Orientation="Horizontal" Width="1173"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="AUTO"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="AUTO"/>
+                        <ColumnDefinition Width="AUTO"/>
+                        <ColumnDefinition Width="AUTO"/>
+                        <ColumnDefinition Width="AUTO"/>
+                        <ColumnDefinition Width="AUTO"/>
+                        <ColumnDefinition Width="AUTO"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Name="ResetSpellIconID" Content="{DynamicResource butResetSpellIconID}" Margin="10" Height="30" Width="120" Click="Button_Click" Grid.Row="0" Grid.Column="0"/>
+                    <Button Name="ResetActiveIconID" Content="{DynamicResource butResetActiveIconID}" Margin="10" Height="30" Width="120" Click="Button_Click" Grid.Row="0" Grid.Column="1"/>
+                    <Button Name="SaveIcon" Content="{DynamicResource butSaveIcon}" HorizontalAlignment="Right" Margin="5" Height="30" Width="100" Click="Button_Click" Grid.Row="0" Grid.Column="6"/>
+                    <Label Content="{DynamicResource labCurrentIcon}" Margin="5" Grid.Row="1" Grid.Column="0"/>
+                    <Image Name="CurrentIcon" Margin="5" Height="64" Width="64" Grid.Row="1" Grid.Column="1"/>
+                    <Label Content="{DynamicResource labNewIcon}" Margin="5" Grid.Row="1" Grid.Column="2"/>
+                    <Image Name="NewIcon" Margin="5" Height="64" Width="64" Grid.Row="1" Grid.Column="3"/>
+                    <Label Content="{DynamicResource labFiltericons}" Margin="5" Grid.Row="1" Grid.Column="4"/>
+                    <c:ThreadSafeTextBox x:Name="FilterIcons" Margin="5" Height="30" VerticalAlignment="Top" Width="145" Grid.Row="1" Grid.Column="5" TextWrapping="NoWrap" KeyDown="_KeyDown" KeyUp="_KeyUp"/>
+                    <Slider x:Name="slider" Margin="20,10,20,10" VerticalAlignment="Top" AutoToolTipPlacement="TopLeft" Maximum="128" Value="32" Cursor="SizeWE"
+                            ValueChanged="slider_ValueChanged" Minimum="2" SmallChange="1" ToolTip="{DynamicResource sliderChangeIconSizeTooltip}" 
+                            Focusable="False" Grid.Row="1" Grid.Column="6"/>
+                    <ScrollViewer Name="IconScrollViewer" Margin="10" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="7" >
+                        <WrapPanel Name="IconGrid" Orientation="Horizontal"/>
                     </ScrollViewer>
-                    <Button Name="ResetSpellIconID" Content="{DynamicResource butResetSpellIconID}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,1,0,0" Height="30" Width="120" Click="Button_Click" Grid.ColumnSpan="3"/>
-                    <Button Name="ResetActiveIconID" Content="{DynamicResource butResetActiveIconID}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="167.907,1,0,0" Height="30" Width="120" Click="Button_Click" Grid.Column="2"/>
-                    <Label Content="{DynamicResource labFiltericons}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="443,43,0,0" Height="30" Width="68" Grid.Column="2"/>
-                    <c:ThreadSafeTextBox x:Name="FilterIcons" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="516,43,0,0" Height="30" Width="145" Grid.Column="2" TextWrapping="NoWrap" KeyDown="_KeyDown" KeyUp="_KeyUp"/>
-                    <Button Name="SaveIcon" Content="{DynamicResource butSaveIcon}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="698.907,43,0,0" Height="30" Width="100" Click="Button_Click" Grid.Column="2"/>
-                    <Slider x:Name="slider" Margin="846,43,91,598" AutoToolTipPlacement="TopLeft" Maximum="128" Value="32" Cursor="SizeWE" ValueChanged="slider_ValueChanged" Minimum="2" SmallChange="1" ToolTip="{DynamicResource sliderChangeIconSizeTooltip}" Focusable="False" Grid.Column="2"/>
                 </Grid>
             </TabItem>
             <TabItem Name="VisualTab" Header="{DynamicResource Visual}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Label Content="{DynamicResource VisualTabSelectedId}" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="1" Margin="5,5,0,0" FontSize="16"/>
-                    <Label Name="SelectedVisualPath" Grid.Row="0" Grid.Column="0" MinWidth="50" Margin="180,5,50,5" FontSize="16"/>
-                    <Label Content="{DynamicResource VisualTabInstructions}" Grid.Row="0" Grid.Column="2" Margin="0,5,0,0" FontSize="14"/>
-                    <Button Name="SaveVisualChangesBtn" Content="{DynamicResource VisualTabSaveChanges}" Grid.Row="0" Grid.Column="3" Margin="0,10,0,10" Click="SaveVisualChangesBtn_Click"/>
-                    <!-- Spell Visual Lists -->
-                    <Label Content="{DynamicResource VisualTabKitsHeader}" Grid.Row="1" Grid.Column="0" Margin="5,0,5,5" HorizontalAlignment="Left"/>
-                    <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MaxHeight="250" MinWidth="350" Margin="10,30,10,10" BorderBrush="LightCyan" BorderThickness="2">
-                        <Grid Name="VisualSettingsGrid" Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MinWidth="350"/>
-                    </Border>
-                    <Label Content="{DynamicResource VisualTabEffectsHeader}" Grid.Row="3" Grid.Column="0" Margin="5,5,5,5" HorizontalAlignment="Left"/>
-                    <Border Grid.Row="3" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MaxHeight="250" MinWidth="350" Margin="10,30,10,10" BorderBrush="LightCyan" BorderThickness="2">
-                        <Grid Name="VisualEffectsListGrid" Grid.Row="3" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MinWidth="350"/>
-                    </Border>
-                    <Grid Name="VisualSettingsEditorGrid" Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" Grid.ColumnSpan="2" MinWidth="500" Margin="10,0,10,10">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <!-- Spell Visual Kit -->
-                        <Label Content="{DynamicResource VisualKitStartAnimId}" Grid.Row="0" Grid.Column="0" Margin="10,30,10,5"/>
-                        <c:FilteredComboBox x:Name="StartAnimIdCombo" Grid.Row="0" Grid.Column="1" Margin="10,30,10,5" MinHeight="50" MinWidth="250"
+                <TabControl>
+                    <TabItem Header="Kits &amp; Effects">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{DynamicResource VisualTabSelectedId}" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="1" Margin="5,5,0,0" FontSize="16"/>
+                            <Label Name="SelectedVisualPath" Grid.Row="0" Grid.Column="0" MinWidth="50" Margin="180,5,50,5" FontSize="16"/>
+                            <Label Content="{DynamicResource VisualTabInstructions}" Grid.Row="0" Grid.Column="2" Margin="0,5,0,0" FontSize="14"/>
+                            <Button Name="SaveVisualChangesBtn" Content="{DynamicResource VisualTabSaveChanges}" Grid.Row="0" Grid.Column="3" Margin="0,10,0,10" Click="SaveVisualChangesBtn_Click"/>
+                            <!-- Spell Visual Lists -->
+                            <Label Content="{DynamicResource VisualTabKitsHeader}" Grid.Row="1" Grid.Column="0" Margin="5,0,5,5" HorizontalAlignment="Left"/>
+                            <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MaxHeight="250" MinWidth="350" Margin="10,30,10,10" BorderBrush="LightCyan" BorderThickness="2">
+                                <Grid Name="VisualSettingsGrid" Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MinWidth="350"/>
+                            </Border>
+                            <Label Content="{DynamicResource VisualTabEffectsHeader}" Grid.Row="3" Grid.Column="0" Margin="5,5,5,5" HorizontalAlignment="Left"/>
+                            <Border Grid.Row="3" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MaxHeight="250" MinWidth="350" Margin="10,30,10,10" BorderBrush="LightCyan" BorderThickness="2">
+                                <Grid Name="VisualEffectsListGrid" Grid.Row="3" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" MinWidth="350"/>
+                            </Border>
+                            <Grid Name="VisualSettingsEditorGrid" Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" Grid.ColumnSpan="2" MinWidth="500" Margin="10,0,10,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Spell Visual Kit -->
+                                <Label Content="{DynamicResource VisualKitStartAnimId}" Grid.Row="0" Grid.Column="0" Margin="10,30,10,5"/>
+                                <c:FilteredComboBox x:Name="StartAnimIdCombo" Grid.Row="0" Grid.Column="1" Margin="10,30,10,5" MinHeight="50" MinWidth="250"
                             IsEditable="True" 
                             IsTextSearchEnabled="True"
                             StaysOpenOnEdit="True"
                             c:OnlyValuesInList="True"/>
-                        <Label Content="{DynamicResource VisualKitAnimationId}" Grid.Row="1" Grid.Column="0" Margin="10,5,10,5"/>
-                        <c:FilteredComboBox x:Name="AnimationIdCombo" Grid.Row="1" Grid.Column="1" Margin="10,5,10,5" MinHeight="50" MinWidth="250"
+                                <Label Content="{DynamicResource VisualKitAnimationId}" Grid.Row="1" Grid.Column="0" Margin="10,5,10,5"/>
+                                <c:FilteredComboBox x:Name="AnimationIdCombo" Grid.Row="1" Grid.Column="1" Margin="10,5,10,5" MinHeight="50" MinWidth="250"
                             IsEditable="True" 
                             IsTextSearchEnabled="True"
                             StaysOpenOnEdit="True"
                             c:OnlyValuesInList="True"/>
-                        <Label Content="{DynamicResource VisualKitSpecialEffects1}" Grid.Row="2" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="SpecialEffect1Txt" Grid.Row="2" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualKitSpecialEffects2}" Grid.Row="3" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="SpecialEffect2Txt" Grid.Row="3" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualKitSpecialEffects3}" Grid.Row="4" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="SpecialEffect3Txt" Grid.Row="4" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualKitWorldEffect}" Grid.Row="0" Grid.Column="2" Margin="10,30,10,5"/>
-                        <TextBox Name="WorldEffectTxt" Grid.Row="0" Grid.Column="3" Margin="10,30,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualKitSoundId}" Grid.Row="1" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="SoundIdTxt" Grid.Row="1" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualKitShakeId}" Grid.Row="2" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="ShakeIdTxt" Grid.Row="2" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualKitFlags}" Grid.Row="3" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualFlagsTxt" Grid.Row="3" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                    </Grid>
-                    <Grid Name="VisualKitEffectEditorGrid" Grid.Row="3" Grid.RowSpan="2" Grid.Column="2" Grid.ColumnSpan="2" MinWidth="500" Margin="10,10,10,10">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <!-- EffectName -->
-                        <Label Content="{DynamicResource VisualEffectName}" Grid.Row="1" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualEffectNameTxt" Grid.Row="1" Grid.Column="1" Margin="10,5,10,5" MinWidth="300"/>
-                        <Label Content="{DynamicResource VisualEffectFilePath}" Grid.Row="2" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualEffectFilePathTxt" Grid.Row="2" Grid.Column="1" Margin="10,5,10,5" MinWidth="300"/>
-                        <Label Content="{DynamicResource VisualEffectAreaEffectSize}" Grid.Row="3" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualEffectAreaEffectSizeTxt" Grid.Row="3" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualEffectScale}" Grid.Row="4" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualEffectScaleTxt" Grid.Row="4" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualEffectMinScale}" Grid.Row="5" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualEffectMinAllowedScaleTxt" Grid.Row="5" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualEffectMaxScale}" Grid.Row="6" Grid.Column="0" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualEffectMaxAllowedScaleTxt" Grid.Row="6" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
-                        <!-- Attachments -->
-                        <Button Name="NewVisualAttachBtn" Content="{DynamicResource ConvertEffectToAttach}" Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" 
+                                <Label Content="{DynamicResource VisualKitSpecialEffects1}" Grid.Row="2" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="SpecialEffect1Txt" Grid.Row="2" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualKitSpecialEffects2}" Grid.Row="3" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="SpecialEffect2Txt" Grid.Row="3" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualKitSpecialEffects3}" Grid.Row="4" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="SpecialEffect3Txt" Grid.Row="4" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualKitWorldEffect}" Grid.Row="0" Grid.Column="2" Margin="10,30,10,5"/>
+                                <TextBox Name="WorldEffectTxt" Grid.Row="0" Grid.Column="3" Margin="10,30,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualKitSoundId}" Grid.Row="1" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="SoundIdTxt" Grid.Row="1" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualKitShakeId}" Grid.Row="2" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="ShakeIdTxt" Grid.Row="2" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualKitFlags}" Grid.Row="3" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualFlagsTxt" Grid.Row="3" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                            </Grid>
+                            <Grid Name="VisualKitEffectEditorGrid" Grid.Row="3" Grid.RowSpan="2" Grid.Column="2" Grid.ColumnSpan="2" MinWidth="500" Margin="10,10,10,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- EffectName -->
+                                <Label Content="{DynamicResource VisualEffectName}" Grid.Row="1" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualEffectNameTxt" Grid.Row="1" Grid.Column="1" Margin="10,5,10,5" MinWidth="300"/>
+                                <Label Content="{DynamicResource VisualEffectFilePath}" Grid.Row="2" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualEffectFilePathTxt" Grid.Row="2" Grid.Column="1" Margin="10,5,10,5" MinWidth="300"/>
+                                <Label Content="{DynamicResource VisualEffectAreaEffectSize}" Grid.Row="3" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualEffectAreaEffectSizeTxt" Grid.Row="3" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualEffectScale}" Grid.Row="4" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualEffectScaleTxt" Grid.Row="4" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualEffectMinScale}" Grid.Row="5" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualEffectMinAllowedScaleTxt" Grid.Row="5" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualEffectMaxScale}" Grid.Row="6" Grid.Column="0" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualEffectMaxAllowedScaleTxt" Grid.Row="6" Grid.Column="1" Margin="10,5,10,5" MinWidth="150"/>
+                                <!-- Attachments -->
+                                <Button Name="NewVisualAttachBtn" Content="{DynamicResource ConvertEffectToAttach}" Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" 
                                 Margin="40,5,40,5" Click="NewVisualAttachBtn_Click" IsEnabled="False"/>
-                        <Label Content="{DynamicResource VisualAttachAttachId}" Grid.Row="1" Grid.Column="2" Margin="10,5,10,5"/>
-                        <ComboBox Name="VisualAttachmentIdCombo" Grid.Row="1" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualAttachOffsetX}" Grid.Row="2" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualAttachmentOffsetXTxt" Grid.Row="2" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualAttachOffsetY}" Grid.Row="3" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualAttachmentOffsetYTxt" Grid.Row="3" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualAttachOffsetZ}" Grid.Row="4" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualAttachmentOffsetZTxt" Grid.Row="4" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualAttachOffsetYaw}" Grid.Row="5" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualAttachmentOffsetYawTxt" Grid.Row="5" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualAttachOffsetPitch}" Grid.Row="6" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualAttachmentOffsetPitchTxt" Grid.Row="6" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                        <Label Content="{DynamicResource VisualAttachOffsetRoll}" Grid.Row="7" Grid.Column="2" Margin="10,5,10,5"/>
-                        <TextBox Name="VisualAttachmentOffsetRollTxt" Grid.Row="7" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
-                    </Grid>
-                </Grid>
+                                <Label Content="{DynamicResource VisualAttachAttachId}" Grid.Row="1" Grid.Column="2" Margin="10,5,10,5"/>
+                                <ComboBox Name="VisualAttachmentIdCombo" Grid.Row="1" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualAttachOffsetX}" Grid.Row="2" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualAttachmentOffsetXTxt" Grid.Row="2" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualAttachOffsetY}" Grid.Row="3" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualAttachmentOffsetYTxt" Grid.Row="3" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualAttachOffsetZ}" Grid.Row="4" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualAttachmentOffsetZTxt" Grid.Row="4" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualAttachOffsetYaw}" Grid.Row="5" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualAttachmentOffsetYawTxt" Grid.Row="5" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualAttachOffsetPitch}" Grid.Row="6" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualAttachmentOffsetPitchTxt" Grid.Row="6" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                                <Label Content="{DynamicResource VisualAttachOffsetRoll}" Grid.Row="7" Grid.Column="2" Margin="10,5,10,5"/>
+                                <TextBox Name="VisualAttachmentOffsetRollTxt" Grid.Row="7" Grid.Column="3" Margin="10,5,10,5" MinWidth="150"/>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Missile">
+                        <!-- TODO(Harry) -->
+                    </TabItem>
+                    <TabItem Header="Map Builder">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="AUTO"/>
+                                <ColumnDefinition Width="AUTO"/>
+                                <ColumnDefinition Width="AUTO"/>
+                                <ColumnDefinition Width="AUTO"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                                <RowDefinition Height="AUTO"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="{DynamicResource MapBuilderDescription}" Margin="5" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <Label Content="{DynamicResource MapBuilderDbStartingId}" Margin="5" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Name="MapBuilderDbStartingId" Text="150000" Margin="5" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <Label Content="{DynamicResource MapBuilderMapId}" Margin="5" Grid.Row="2" Grid.Column="0"/>
+                            <TextBox Name="MapBuilderMapId" Text="13" Margin="5" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <Label Content="{DynamicResource MapBuilderTopLeftCoord}" Margin="5" Grid.Row="3" Grid.Column="0"/>
+                            <TextBox Name="MapBuilderTopLeftCoordX" Text="138" Margin="5" Grid.Row="3" Grid.Column="1"/>
+                            <TextBox Name="MapBuilderTopLeftCoordY" Text="138" Margin="5" Grid.Row="3" Grid.Column="2"/>
+                            <Label Content="{DynamicResource MapBuilderBottomRightCoord}" Margin="5" Grid.Row="4" Grid.Column="0"/>
+                            <TextBox Name="MapBuilderBottomRightCoordX" Text="-138" Margin="5" Grid.Row="4" Grid.Column="1"/>
+                            <TextBox Name="MapBuilderBottomRightCoordY" Text="-138" Margin="5" Grid.Row="4" Grid.Column="2"/>
+                            <Label Content="{DynamicResource MapBuilderCoordZ}" Margin="5" Grid.Row="5" Grid.Column="0"/>
+                            <TextBox Name="MapBuilderCoordZ" Text="-144" Margin="5" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <Label Content="{DynamicResource MapBuilderCellSize}" Margin="5" Grid.Row="6" Grid.Column="0"/>
+                            <TextBox Name="MapBuilderCellSize" Text="7" Margin="5" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <Label Content="{DynamicResource MapBuilderDbQueryCreature}" Margin="5" Grid.Row="7" Grid.Column="0"/>
+                            <ScrollViewer Grid.Row="7" Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="3" MaxWidth="900" Margin="5" MaxHeight="150">
+                                <TextBox Name="MapBuilderCreatureTemplate" Initialized="MapBuilderTemplate_Initialized" TextWrapping="Wrap" 
+                                         AcceptsReturn="True" Margin="5"/>
+                            </ScrollViewer>
+                            <Label Content="{DynamicResource MapBuilderDbQueryCreatureModelInfo}" Margin="5" Grid.Row="9" Grid.Column="0"/>
+                            <ScrollViewer Grid.Row="9" Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="3" MaxWidth="900" Margin="5" MaxHeight="150">
+                                <TextBox Name="MapBuilderCreatureModelInfoTemplate" Initialized="MapBuilderTemplate_Initialized" TextWrapping="Wrap" 
+                                         AcceptsReturn="True" Margin="5"/>
+                            </ScrollViewer>
+                            <Label Content="{DynamicResource MapBuilderDbQueryCreatureTemplate}" Margin="5" Grid.Row="11" Grid.Column="0"/>
+                            <ScrollViewer Grid.Row="11" Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="3" MaxWidth="900" Margin="5" MaxHeight="150">
+                                <TextBox Name="MapBuilderCreatureTemplateTemplate" Initialized="MapBuilderTemplate_Initialized" TextWrapping="Wrap" 
+                                         AcceptsReturn="True" Margin="5"/>
+                            </ScrollViewer>
+                            <Button Content="{DynamicResource MapBuilderGenerateBtn}" Margin="40,5,40,5" Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="3" Click="ButtonClickVisualMapBuild"/>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
             </TabItem>
         </TabControl>
     </Grid>

@@ -1,0 +1,29 @@
+# CreatureModelData.dbc structure for 3.3.5a 12340
+uint id
+uint flags
+uint modelPath string
+uint sizeClass
+float modelScale
+uint bloodId
+uint footprintTextureId
+float footprintTextureLength
+float footprintTextureWidth
+float footprintParticleScale
+uint foleyMaterialId
+uint footstepShakeSize
+uint deathThudShakeSize
+uint soundData
+float collisionWidth
+float collisionHeight
+float mountHeight
+float geoBoxMinX
+float geoBoxMinY
+float geoBoxMinZ
+float geoBoxMaxX
+float geoBoxMaxY
+float geoBoxMaxZ
+float worldEffectScale
+float attachedEffectScale
+float MissileCollisionRadius
+float MissileCollisionPush
+float MissileCollisionRaise

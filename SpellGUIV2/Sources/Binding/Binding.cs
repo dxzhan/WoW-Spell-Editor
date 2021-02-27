@@ -1,4 +1,5 @@
-﻿using SpellEditor.Sources.Database;
+﻿using NLog;
+using SpellEditor.Sources.Database;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,13 +8,17 @@ namespace SpellEditor.Sources.Binding
 {
     public class Binding
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         public readonly BindingEntry[] Fields;
         public readonly string Name;
+        public readonly bool OrderOutput;
 
-        public Binding(string fileName, List<BindingEntry> bindingEntryList)
+        public Binding(string fileName, List<BindingEntry> bindingEntryList, bool orderOutput)
         {
             Name = Path.GetFileNameWithoutExtension(fileName);
             Fields = bindingEntryList.ToArray();
+            OrderOutput = orderOutput;
         }
 
         /**
@@ -35,6 +40,11 @@ namespace SpellEditor.Sources.Binding
                     case BindingType.UINT:
                         {
                             size += sizeof(uint);
+                            break;
+                        }
+                    case BindingType.UINT8:
+                        {
+                            size += sizeof(byte);
                             break;
                         }
                     case BindingType.FLOAT:
@@ -75,14 +85,14 @@ namespace SpellEditor.Sources.Binding
         {
             try
             {
-                var table = adapter.Query("SELECT COUNT(*) FROM " + Name);
+                var table = adapter.Query($"SELECT COUNT(*) FROM `{Name}`");
                 if (table.Rows.Count == 1)
                     return int.Parse(table.Rows[0][0].ToString());
                 return 0;
             }
             catch (Exception e)
             {
-                Console.WriteLine("WARNING: ImportExportWindow triggered: " + e.Message);
+                Logger.Info("WARNING: ImportExportWindow triggered: " + e.Message);
                 return -1;
             }
         }

@@ -7,6 +7,8 @@
     <system:String x:Key="labSpellsLoaded">Aucun sort chargé.</system:String>
     <system:String x:Key="labGoToSpell">Aller au sort :</system:String>
     <system:String x:Key="labFilterBtName">Filtrer par nom :</system:String>
+	<system:String x:Key="labFilterByEffect">Filter by spell effect :</system:String>
+	<system:String x:Key="labFilterByAura">Filter by spell aura:</system:String>
     <system:String x:Key="tabEnglish">Anglais</system:String>
     <system:String x:Key="tabKorean">Coréen</system:String>
     <system:String x:Key="tabFrench">Français</system:String>
@@ -119,8 +121,8 @@
     <system:String x:Key="labEffectBonusMultiplier2">Multiplicateur de l'effet 2 :</system:String>
     <system:String x:Key="labDamageMultiplier3">Multiplicateur de dégâts 3 :</system:String>
     <system:String x:Key="labEffectBonusMultiplier3">Multiplicateur de l'effet 3 :</system:String>
-    <system:String x:Key="labItemTool1">Outil requis 1 :</system:String>
-    <system:String x:Key="labItemTool2">Outil requis 2 :</system:String>
+    <system:String x:Key="labItemTool1">Totem 1 :</system:String>
+    <system:String x:Key="labItemTool2">Totem 2 :</system:String>
     <system:String x:Key="labReagent1">Réactif 1 :</system:String>
     <system:String x:Key="labReagent2">Réactif 2 :</system:String>
     <system:String x:Key="labReagent3">Réactif 3 :</system:String>
@@ -218,6 +220,10 @@
     <system:String x:Key="String3">Une exception a été levée lors de la création du fichier de configuration.</system:String>
     <system:String x:Key="String4">Indiquez si vous souhaitez modifier l'ID de l'icône simple ou l'ID de l'icône active.</system:String>
     <system:String x:Key="String5">Un seul sort peut être sélectionné à la fois.</system:String>
+	<system:String x:Key="ExportCheckedFiles">Export checked to DBC Files</system:String>
+	<system:String x:Key="ExportCheckedFilesMpq">Export checked to MPQ</system:String>
+	<system:String x:Key="ExportMpqName">MPQ name:</system:String>
+	<system:String x:Key="TablesToExport">Select which SQL tables you wish to export.</system:String>
 	
 	<!--#region visual tab -->
 	<system:String xml:space="preserve" x:Key="VisualDeleteListEntryConfirm">CONFIRM DELETE:&#10;This change is&#10;saved immediately</system:String>
@@ -256,6 +262,20 @@
 	<system:String x:Key="VisualAttachOffsetPitch">Attachment Offset Pitch</system:String>
 	<system:String x:Key="VisualAttachOffsetRoll">Attachment Offset Roll</system:String>
 	<system:String x:Key="ConvertEffectToAttach">Convert Effect to Attachment</system:String>
+	<!--#endregion-->
+	
+	<!--#region MapBuilder-->
+	<system:String x:Key="MapBuilderDescription">This tool uses the CreatureDisplayInfo.dbc and CreatureModelData.dbc files. It also requires the SPELLS directory to be present with all the M2 spell models.</system:String>
+	<system:String x:Key="MapBuilderDbStartingId">Database Starting ID</system:String>
+	<system:String x:Key="MapBuilderMapId">Map ID</system:String>
+	<system:String x:Key="MapBuilderTopLeftCoord">Map Top Left Coordinate X, Y</system:String>
+	<system:String x:Key="MapBuilderBottomRightCoord">Map Bottom Right Coordinate X, Y</system:String>
+	<system:String x:Key="MapBuilderCoordZ">Map Coordinate Z</system:String>
+	<system:String x:Key="MapBuilderCellSize">Cell Size</system:String>
+	<system:String x:Key="MapBuilderDbQueryCreature">Creature.sql Query Template</system:String>
+	<system:String x:Key="MapBuilderDbQueryCreatureModelInfo">Creature_Model_Info.sql Query Template</system:String>
+	<system:String x:Key="MapBuilderDbQueryCreatureTemplate">Creature_Template.sql Query Template</system:String>
+	<system:String x:Key="MapBuilderGenerateBtn">Generate</system:String>
 	<!--#endregion-->
 	
     <!--#region some array of strings-->

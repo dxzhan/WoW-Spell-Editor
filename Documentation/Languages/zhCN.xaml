@@ -7,6 +7,8 @@
     <system:String x:Key="labSpellsLoaded">没有读取技能数据.</system:String>
     <system:String x:Key="labGoToSpell">跳转到技能:</system:String>
     <system:String x:Key="labFilterBtName">根据名字筛选:</system:String>
+	<system:String x:Key="labFilterByEffect">Filter by spell effect:</system:String>
+	<system:String x:Key="labFilterByAura">Filter by spell aura:</system:String>
     <system:String x:Key="tabEnglish">英语</system:String>
     <system:String x:Key="tabKorean">韩语</system:String>
     <system:String x:Key="tabFrench">法语</system:String>
@@ -119,8 +121,8 @@
     <system:String x:Key="labEffectBonusMultiplier2" xml:space="preserve">        效果奖励乘数(?):</system:String>
     <system:String x:Key="labDamageMultiplier3" xml:space="preserve">              伤害乘数:</system:String>
     <system:String x:Key="labEffectBonusMultiplier3" xml:space="preserve">        效果奖励乘数(?):</system:String>
-    <system:String x:Key="labItemTool1">需要物品1:</system:String>
-    <system:String x:Key="labItemTool2">需要物品2:</system:String>
+    <system:String x:Key="labItemTool1">Totem 1:</system:String>
+    <system:String x:Key="labItemTool2">Totem 2:</system:String>
     <system:String x:Key="labReagent1">消耗物品 1:</system:String>
     <system:String x:Key="labReagent2">消耗物品 2:</system:String>
     <system:String x:Key="labReagent3">消耗物品 3:</system:String>
@@ -218,6 +220,10 @@
     <system:String x:Key="String3">创建配置文件时抛出异常。</system:String>
     <system:String x:Key="String4">选择是更改法术图标ID还是法术激活图标ID。</system:String>
     <system:String x:Key="String5">一次只能选择一个法术。</system:String>
+	<system:String x:Key="ExportCheckedFiles">Export checked to DBC Files</system:String>
+	<system:String x:Key="ExportCheckedFilesMpq">Export checked to MPQ</system:String>
+	<system:String x:Key="ExportMpqName">MPQ name:</system:String>
+	<system:String x:Key="TablesToExport">Select which SQL tables you wish to export.</system:String>
 	
 	<!--#region visual tab -->
 	<system:String xml:space="preserve" x:Key="VisualDeleteListEntryConfirm">CONFIRM DELETE:&#10;This change is&#10;saved immediately</system:String>
@@ -256,6 +262,20 @@
 	<system:String x:Key="VisualAttachOffsetPitch">Attachment Offset Pitch</system:String>
 	<system:String x:Key="VisualAttachOffsetRoll">Attachment Offset Roll</system:String>
 	<system:String x:Key="ConvertEffectToAttach">Convert Effect to Attachment</system:String>
+	<!--#endregion-->
+	
+	<!--#region MapBuilder-->
+	<system:String x:Key="MapBuilderDescription">This tool uses the CreatureDisplayInfo.dbc and CreatureModelData.dbc files. It also requires the SPELLS directory to be present with all the M2 spell models.</system:String>
+	<system:String x:Key="MapBuilderDbStartingId">Database Starting ID</system:String>
+	<system:String x:Key="MapBuilderMapId">Map ID</system:String>
+	<system:String x:Key="MapBuilderTopLeftCoord">Map Top Left Coordinate X, Y</system:String>
+	<system:String x:Key="MapBuilderBottomRightCoord">Map Bottom Right Coordinate X, Y</system:String>
+	<system:String x:Key="MapBuilderCoordZ">Map Coordinate Z</system:String>
+	<system:String x:Key="MapBuilderCellSize">Cell Size</system:String>
+	<system:String x:Key="MapBuilderDbQueryCreature">Creature.sql Query Template</system:String>
+	<system:String x:Key="MapBuilderDbQueryCreatureModelInfo">Creature_Model_Info.sql Query Template</system:String>
+	<system:String x:Key="MapBuilderDbQueryCreatureTemplate">Creature_Template.sql Query Template</system:String>
+	<system:String x:Key="MapBuilderGenerateBtn">Generate</system:String>
 	<!--#endregion-->
 	
     <!--#region some array of strings-->

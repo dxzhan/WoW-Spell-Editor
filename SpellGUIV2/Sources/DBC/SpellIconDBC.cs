@@ -1,9 +1,9 @@
-﻿using SpellEditor.Sources.BLP;
+﻿using NLog;
+using SpellEditor.Sources.BLP;
 using SpellEditor.Sources.Database;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -15,6 +15,8 @@ namespace SpellEditor.Sources.DBC
 {
     class SpellIconDBC : AbstractDBC
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private MainWindow main;
         private IDatabaseAdapter adapter;
 
@@ -89,28 +91,16 @@ namespace SpellEditor.Sources.DBC
             var res = container.Rows[0];
             uint iconInt = uint.Parse(res[0].ToString());
             uint iconActiveInt = uint.Parse(res[1].ToString());
-            // Update currently selected icon, we don't currently use ActiveIconID
-            System.Windows.Controls.Image temp = new System.Windows.Controls.Image();
-            temp.Width = iconSize == null ? 32 : iconSize.Value;
-            temp.Height = iconSize == null ? 32 : iconSize.Value;
-            temp.Margin = iconMargin == null ? new Thickness(margin, 0, 0, 0) : iconMargin.Value;
-            temp.VerticalAlignment = VerticalAlignment.Top;
-            temp.HorizontalAlignment = HorizontalAlignment.Left;
-            temp.Source = BlpManager.GetInstance().GetImageSourceFromBlpPath(GetIconPath(iconInt) + ".blp");
-            temp.Name = "CurrentSpellIcon";
-            // Code smells here on hacky positioning and updating the icon
-            temp.Margin = new Thickness(103, 38, 0, 0);
-            main.CurrentIconGrid.Children.Clear();
-            main.CurrentIconGrid.Children.Add(temp);
-            
-            // Load all icons available if have not already
+            // Update currently selected icon, we don't currently handle ActiveIconID
+            main.CurrentIcon.Source = BlpManager.GetInstance().GetImageSourceFromBlpPath(GetIconPath(iconInt) + ".blp");
+            // Load all icons available if we have not already
             if (main.IconGrid.Children.Count == 0)
             {
                 var watch = new Stopwatch();
                 watch.Start();
                 LoadAllIcons(margin);
                 watch.Stop();
-                Console.WriteLine($"Loaded all icons as UI elements in {watch.ElapsedMilliseconds}ms");
+                Logger.Info($"Loaded all icons as UI elements in {watch.ElapsedMilliseconds}ms");
             }
         }
 
@@ -138,7 +128,7 @@ namespace SpellEditor.Sources.DBC
                 image.VerticalAlignment = VerticalAlignment.Top;
                 image.HorizontalAlignment = HorizontalAlignment.Left;
                 image.Name = "Index_" + entry.Offset;
-                image.ToolTip = entry.Name + ".blp";
+                image.ToolTip = entry.ID + " - " + entry.Name + ".blp";
                 image.IsVisibleChanged += IsImageVisibleChanged;
                 image.MouseDown += ImageDown;
             }
@@ -154,7 +144,7 @@ namespace SpellEditor.Sources.DBC
             var source = image.Source;
             if (source == null && (bool)e.NewValue)
             {
-                var path = image.ToolTip.ToString();
+                var path = image.ToolTip.ToString().Substring(image.ToolTip.ToString().IndexOf('-') + 2);
                 await Task.Factory.StartNew(() => source = BlpManager.GetInstance().GetImageSourceFromBlpPath(path));
             }
             image.Source = source;
@@ -162,25 +152,11 @@ namespace SpellEditor.Sources.DBC
 
         public void ImageDown(object sender, EventArgs e)
         {
-            var image = (Image)sender;
-            var temp = new Image();
-
-            temp.Width = iconSize == null ? 32 : iconSize.Value;
-            temp.Height = iconSize == null ? 32 : iconSize.Value;
-            temp.Margin = iconMargin == null ? new Thickness(16, 0, 0, 0) : iconMargin.Value;
-            temp.VerticalAlignment = VerticalAlignment.Top;
-            temp.HorizontalAlignment = HorizontalAlignment.Left;
-            temp.Source = image.Source;
-            temp.Name = "NewSpellIcon";
-
-            // Code smells here on hacky positioning and updating the icon
-            temp.Margin = new Thickness(285, 38, 0, 0);
-            main.NewIconGrid.Children.Clear();
-            main.NewIconGrid.Children.Add(temp);
+            var image = sender as Image;
+            main.NewIcon.Source = image.Source;
 
             uint offset = uint.Parse(image.Name.Substring(6));
             uint ID = 0;
-
             for (int i = 0; i < Header.RecordCount; ++i)
             {
                 if (Lookups[i].Offset == offset)
@@ -220,8 +196,8 @@ namespace SpellEditor.Sources.DBC
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                Logger.Info(ex.Message);
+                Logger.Info(ex.StackTrace);
             }
             return selectedRecord.Name;
         }

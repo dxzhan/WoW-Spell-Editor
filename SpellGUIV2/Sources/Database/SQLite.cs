@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace SpellEditor.Sources.Database
 {
-    class SQLite : IDatabaseAdapter
+    public class SQLite : IDatabaseAdapter
     {
         private readonly object _syncLock = new object();
         private readonly SQLiteConnection _connection;
@@ -50,6 +50,24 @@ namespace SpellEditor.Sources.Database
                         adapter.SelectCommand.CommandTimeout = 0;
                         adapter.Fill(dataSet);
                         return dataSet.Tables[0];
+                    }
+
+                }
+            }
+        }
+
+        public object QuerySingleValue(string query)
+        {
+            lock (_syncLock)
+            {
+                using (var adapter = new SQLiteDataAdapter(query, _connection))
+                {
+                    using (var dataSet = new DataSet())
+                    {
+                        adapter.SelectCommand.CommandTimeout = 0;
+                        adapter.Fill(dataSet);
+                        var table = dataSet.Tables[0];
+                        return table.Rows.Count > 0 ? table.Rows[0][0] : null;
                     }
 
                 }
@@ -105,6 +123,9 @@ namespace SpellEditor.Sources.Database
                     case BindingType.INT:
                         str.Append($@"`{field.Name}` INTEGER(11) NOT NULL DEFAULT '0', ");
                         break;
+                    case BindingType.UINT8:
+                        str.Append($@"`{field.Name}` TINYINT NOT NULL DEFAULT '0', ");
+                        break;
                     case BindingType.FLOAT:
                         str.Append($@"`{field.Name}` REAL NOT NULL DEFAULT '0', ");
                         break;
@@ -117,7 +138,7 @@ namespace SpellEditor.Sources.Database
                 }
             }
             var idField = binding.Fields.FirstOrDefault(record => record.Name.ToLower().Equals("id"));
-            if (idField != null)
+            if (idField != null && binding.OrderOutput)
                 str.Append($"PRIMARY KEY (`{idField.Name}`)");
             else
                 str.Remove(str.Length - 2, 2);

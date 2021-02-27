@@ -5,17 +5,20 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using NLog;
 using SpellEditor.Sources.Binding;
-using SpellEditor.Sources.Config;
 using SpellEditor.Sources.Database;
 
 namespace SpellEditor
 {
     partial class ImportExportWindow
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private readonly IDatabaseAdapter _Adapter;
-        public List<string> BindingImportList = new List<string>();
-        public List<string> BindingExportList = new List<string>();
+        public volatile string MpqArchiveName;
+        public volatile List<string> BindingImportList = new List<string>();
+        public volatile List<string> BindingExportList = new List<string>();
 
         public bool IsDataSelected() => BindingImportList.Count > 0 || BindingExportList.Count > 0;
 
@@ -27,7 +30,7 @@ namespace SpellEditor
 
         void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            Console.WriteLine("ERROR: " + e.Exception.Message);
+            Logger.Info("ERROR: " + e.Exception.Message);
             File.WriteAllText("error.txt", e.Exception.Message, Encoding.GetEncoding(0));
             e.Handled = true;
         }
@@ -46,29 +49,19 @@ namespace SpellEditor
 
         private void BuildImportTab()
         {
-            var contents = ImportGrid.Children;
+            var contents = ImportGridDbcs.Children;
             if (contents.Count > 0)
                 return;
-            contents.Add(new Label
-            {
-                Content = "The Spell DBC is the file that needs to be imported for this program to work."
-            });
-            var importBtn = new Button
-            {
-                Content = "Import Checked DBC Files",
-                Padding = new Thickness(2, 2, 2, 2)
-            };
-            importBtn.Click += ImportClick;
-            contents.Add(importBtn);
             foreach (var binding in BindingManager.GetInstance().GetAllBindings())
             {
                 var numRows = binding.GetNumRowsInTable(_Adapter);
                 contents.Add(new CheckBox
                 {
                     Name = binding.Name + "ImportCheckBox",
-                    Content = $"Import {binding.Name}.dbc {(numRows > 0 ? $"- {numRows} rows" : "")}",
+                    Content = $"{binding.Name}.dbc {(numRows > 0 ? $"- {numRows} rows" : "")}",
                     HorizontalAlignment = HorizontalAlignment.Left,
                     VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(1),
                     IsEnabled = numRows == 0,
                     IsChecked = numRows == 0 && 
                         (binding.Name.Equals("Spell") || 
@@ -79,29 +72,19 @@ namespace SpellEditor
 
         private void BuildExportTab()
         {
-            var contents = ExportGrid.Children;
+            var contents = ExportGridDbcs.Children;
             if (contents.Count > 0)
                 return;
-            contents.Add(new Label
-            {
-                Content = "Select which imported tables you wish to export to new DBC files."
-            });
-            var exportBtn = new Button
-            {
-                Content = "Export Checked DBC Files",
-                Padding = new Thickness(4, 5, 4, 5)
-            };
-            exportBtn.Click += ExportClick;
-            contents.Add(exportBtn);
             foreach (var binding in BindingManager.GetInstance().GetAllBindings())
             {
                 var numRows = binding.GetNumRowsInTable(_Adapter);
                 contents.Add(new CheckBox
                 {
                     Name = binding.Name + "ExportCheckBox",
-                    Content = $"Export {(numRows > 0 ? numRows.ToString() : "")} {binding.Name} {(numRows > 0 ? "rows " : "")}to Export\\{binding.Name}.dbc",
+                    Content = $"{binding.Name} {(numRows > 0 ? numRows.ToString() : "")} {(numRows > 0 ? "rows " : "")}to Export\\{binding.Name}.dbc",
                     HorizontalAlignment = HorizontalAlignment.Left,
                     VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(1),
                     IsEnabled = numRows > 0,
                     IsChecked = numRows > 0 && 
                         (binding.Name.Equals("Spell") ||
@@ -110,12 +93,20 @@ namespace SpellEditor
             }
         }
 
+        private void MpqClick(object sender, RoutedEventArgs e)
+        {
+            var archiveName = ExportMpqNameTxt.Text.Length > 0 ? ExportMpqNameTxt.Text : "empty.mpq";
+            archiveName = archiveName.EndsWith(".mpq") ? archiveName : archiveName + ".mpq";
+            MpqArchiveName = archiveName;
+            ClickHandler(false);
+        }
+
         private void ImportClick(object sender, RoutedEventArgs e) => ClickHandler(true);
         private void ExportClick(object sender, RoutedEventArgs e) => ClickHandler(false);
         private void ClickHandler(bool isImport)
         {
             var bindingNameList = new List<string>();
-            var children = isImport ? ImportGrid.Children : ExportGrid.Children;
+            var children = isImport ? ImportGridDbcs.Children : ExportGridDbcs.Children;
             var prefix = isImport ? "Import" : "Export";
             foreach (var element in children)
             {
@@ -129,7 +120,7 @@ namespace SpellEditor
                 BindingImportList = bindingNameList;
             else
                 BindingExportList = bindingNameList;
-            Console.WriteLine($"Bindings selected to {prefix.ToLower()}: {String.Join(", ", bindingNameList)}");
+            Logger.Info($"Bindings selected to {prefix.ToLower()}: {String.Join(", ", bindingNameList)}");
         }
     }
 }

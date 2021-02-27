@@ -1,4 +1,5 @@
-﻿using SpellEditor.Sources.Binding;
+﻿using NLog;
+using SpellEditor.Sources.Binding;
 using SpellEditor.Sources.Database;
 using SpellEditor.Sources.VersionControl;
 using System;
@@ -15,6 +16,8 @@ namespace SpellEditor.Sources.DBC
 {
     public abstract class AbstractDBC
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private string _filePath;
         protected DBCHeader Header;
         protected DBCBody Body;
@@ -28,24 +31,34 @@ namespace SpellEditor.Sources.DBC
 
         public void ReloadContents()
         {
-            var bodyWatch = new Stopwatch();
-            var stringWatch = new Stopwatch();
-            bodyWatch.Start();
-            Body = new DBCBody();
-            Reader = new DBCReader(_filePath);
             var name = Path.GetFileNameWithoutExtension(_filePath);
             var binding = BindingManager.GetInstance().FindBinding(name);
             if (binding == null)
                 throw new Exception($"Binding not found: {name}.txt");
+            var headerWatch = new Stopwatch();
+            var bodyWatch = new Stopwatch();
+            var stringWatch = new Stopwatch();
+            Body = new DBCBody();
+            Reader = new DBCReader(_filePath);
+            // Header
+            headerWatch.Start();
             Header = Reader.ReadDBCHeader();
+            headerWatch.Stop();
+            // Body
+            bodyWatch.Start();
             Reader.ReadDBCRecords(Body, name);
             bodyWatch.Stop();
+            // Strings
             stringWatch.Start();
             Reader.ReadStringBlock();
             stringWatch.Stop();
+            // Total
             var totalElapsed = stringWatch.ElapsedMilliseconds + bodyWatch.ElapsedMilliseconds;
-            Console.WriteLine(
-                $"Loaded {name}.dbc into memory in {totalElapsed}ms. Records: {bodyWatch.ElapsedMilliseconds}ms, strings: {stringWatch.ElapsedMilliseconds}ms");
+            Logger.Info(
+                $"Loaded {name}.dbc into memory in {totalElapsed}ms.\n" +
+                $"\tHeader: {headerWatch.ElapsedMilliseconds}ms\n" +
+                $"\tRecords: {bodyWatch.ElapsedMilliseconds}ms\n" +
+                $"\tStrings: {stringWatch.ElapsedMilliseconds}ms");
         }
 
         public Dictionary<string, object> LookupRecord(uint ID) => LookupRecord(ID, "ID");
@@ -101,6 +114,7 @@ namespace SpellEditor.Sources.DBC
                         {
                             case BindingType.INT:
                             case BindingType.UINT:
+                            case BindingType.UINT8:
                                 {
                                     q.Append(string.Format("'{0}', ", recordMap[field.Name]));
                                     break;
@@ -145,26 +159,68 @@ namespace SpellEditor.Sources.DBC
                 var binding = BindingManager.GetInstance().FindBinding(bindingName);
                 if (binding == null)
                     throw new Exception("Binding not found: " + bindingName);
-
-                var orderClause = binding.Fields.FirstOrDefault(f => f.Name.Equals(IdKey)) != null ? $" ORDER BY `{IdKey}`" : "";
-                var rows = adapter.Query(string.Format($"SELECT * FROM `{bindingName}`{orderClause}")).Rows;
-                uint numRows = uint.Parse(rows.Count.ToString());
-
-                Header = new DBCHeader();
-                Header.FieldCount = (uint)binding.Fields.Count();
-                // Magic is always 'WDBC' https://wowdev.wiki/DBC
-                Header.Magic = 1128416343;
-                Header.RecordCount = numRows;
-                Header.RecordSize = (uint)binding.CalcRecordSize();
-                Header.StringBlockSize = 0;
-
                 var body = new DBCBodyToSerialize();
-                body.Records = new List<DataRow>((int)Header.RecordCount);
-                for (int i = 0; i < numRows; ++i)
-                    body.Records.Add(rows[i]);
-                Header.StringBlockSize = body.GenerateStringOffsetsMap(binding);
+
+                var orderClause = "";
+                if (binding.OrderOutput)
+                {
+                    orderClause = binding.Fields.FirstOrDefault(f => f.Name.Equals(IdKey)) != null ? $" ORDER BY `{IdKey}`" : "";
+                }
+
+                body.Records = LoadRecords(adapter, bindingName, orderClause, updateProgress);
+                var numRows = body.Records.Count();
+                if (numRows == 0)
+                    throw new Exception("No rows to export");
+
+                Header = new DBCHeader
+                {
+                    FieldCount = (uint)binding.Fields.Count(),
+                    // Magic is always 'WDBC' https://wowdev.wiki/DBC
+                    Magic = 1128416343,
+                    RecordCount = (uint)numRows,
+                    RecordSize = (uint)binding.CalcRecordSize(),
+                    StringBlockSize = body.GenerateStringOffsetsMap(binding)
+                };
+
                 SaveDbcFile(updateProgress, body, binding);
             });
+        }
+
+        protected List<Dictionary<string, object>> LoadRecords(IDatabaseAdapter adapter, string bindingName, string orderClause, MainWindow.UpdateProgressFunc updateProgress)
+        {
+            const int pageSize = 1000;
+            int totalCount;
+            using (var queryData = adapter.Query($"SELECT COUNT(*) FROM `{bindingName}`"))
+            {
+                totalCount = int.Parse(queryData.Rows[0][0].ToString());
+            }
+            var lowerBounds = 0;
+            var results = LoadRecordPage(lowerBounds, pageSize, adapter, bindingName, orderClause);
+            var loadCount = results.Count;
+            while (loadCount > 0)
+            {
+                lowerBounds += pageSize;
+                // Visual studio says these casts are redundant but it does not work without them
+                double percent = (double)Math.Min(totalCount, lowerBounds) / (double)totalCount;
+                updateProgress(percent);
+                var page = LoadRecordPage(lowerBounds, pageSize, adapter, bindingName, orderClause);
+                loadCount = page.Count;
+                page.ForEach(results.Add);
+            }
+            return results;
+        }
+
+        protected List<Dictionary<string, object>> LoadRecordPage(int lowerBounds, int pageSize, IDatabaseAdapter adapter, string bindingName, string orderClause)
+        {
+            var records = new List<Dictionary<string, object>>();
+            using (var queryData = adapter.Query($"SELECT * FROM `{bindingName}`{orderClause} LIMIT {lowerBounds}, {pageSize}"))
+            {
+                foreach (DataRow row in queryData.Rows)
+                {
+                    records.Add(ConvertDataRowToDictionary(row));
+                }
+            }
+            return records;
         }
 
         protected void SaveDbcFile(MainWindow.UpdateProgressFunc updateProgress, DBCBodyToSerialize body, Binding.Binding binding)
@@ -187,7 +243,7 @@ namespace SpellEditor.Sources.DBC
                     // Write each record
                     for (int i = 0; i < Header.RecordCount; ++i)
                     {
-                        if (i % 250 == 0)
+                        if (updateProgress != null && i % 250 == 0)
                         {
                             // Visual studio says these casts are redundant but it does not work without them
                             double percent = (double)i / (double)Header.RecordCount;
@@ -196,7 +252,7 @@ namespace SpellEditor.Sources.DBC
                         var record = body.Records[i];
                         foreach (var entry in binding.Fields)
                         {
-                            if (!record.Table.Columns.Contains(entry.Name))
+                            if (!record.Keys.Contains(entry.Name))
                                 throw new Exception($"Column binding not found {entry.Name} in table, using binding {binding.Name}.txt");
                             var data = record[entry.Name].ToString();
                             if (entry.Type == BindingType.INT)
@@ -212,6 +268,13 @@ namespace SpellEditor.Sources.DBC
                                     writer.Write(value);
                                 else
                                     writer.Write(0u);
+                            }
+                            else if (entry.Type == BindingType.UINT8)
+                            {
+                                if (byte.TryParse(data, out byte value))
+                                    writer.Write(value);
+                                else
+                                    writer.Write(byte.MinValue);
                             }
                             else if (entry.Type == BindingType.FLOAT)
                             {
@@ -272,6 +335,16 @@ namespace SpellEditor.Sources.DBC
             return name;
         }
 
+        private Dictionary<string, object> ConvertDataRowToDictionary(DataRow dataRow)
+        {
+            var record = new Dictionary<string, object>();
+            foreach (DataColumn column in dataRow.Table.Columns)
+            {
+                record.Add(column.ColumnName, dataRow[column]);
+            }
+            return record;
+        }
+
         public bool HasData()
         {
             return Body != null && Body.RecordMaps != null && Body.RecordMaps.Count() > 0;
@@ -294,7 +367,7 @@ namespace SpellEditor.Sources.DBC
 
         protected class DBCBodyToSerialize
         {
-            public List<DataRow> Records;
+            public List<Dictionary<string, object>> Records;
             public Dictionary<int, int> OffsetStorage;
             public Dictionary<int, string> ReverseStorage;
 
@@ -312,7 +385,8 @@ namespace SpellEditor.Sources.DBC
                 {
                     foreach (var entry in fields)
                     {
-                        string str = Records[i][entry.Name].ToString();
+                        var record = Records.ElementAt(i);
+                        string str = record[entry.Name].ToString();
                         if (str.Length == 0)
                             continue;
                         var key = str.GetHashCode();

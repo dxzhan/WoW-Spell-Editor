@@ -1,4 +1,5 @@
-﻿using SpellEditor.Sources.DBC;
+﻿using NLog;
+using SpellEditor.Sources.DBC;
 using System;
 using System.Data;
 using System.Text.RegularExpressions;
@@ -7,6 +8,8 @@ namespace SpellEditor.Sources.SpellStringTools
 {
     internal class SpellStringReferenceResolver
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private static string STR_SECONDS = " seconds";
         private static string STR_INFINITE_DUR = "until cancelled";
         private static string STR_HEARTHSTONE_LOC = "(hearthstone location)";
@@ -27,7 +30,7 @@ namespace SpellEditor.Sources.SpellStringTools
                     var dbc = DBCManager.GetInstance().FindDbcForBinding("SpellRange");
                     if (dbc == null)
                     {
-                        Console.WriteLine("Unable to handle $r spell string token, SpellRange.dbc not loaded");
+                        Logger.Info("Unable to handle $r spell string token, SpellRange.dbc not loaded");
                         return str;
                     }
                     var rangeDbc = (SpellRange)dbc;
@@ -78,13 +81,13 @@ namespace SpellEditor.Sources.SpellStringTools
                         }
                         else if (index == 4)
                         {
-                            Console.WriteLine("Unable to handle $a token in spell string");
+                            Logger.Info("Unable to handle $a token in spell string");
                             return str;
                         }
                         var dbc = DBCManager.GetInstance().FindDbcForBinding("SpellRadius");
                         if (dbc == null)
                         {
-                            Console.WriteLine("Unable to handle $a token in spell string, SpellRadius dbc not loaded");
+                            Logger.Info("Unable to handle $a token in spell string, SpellRadius dbc not loaded");
                             return str;
                         }
                         var radiusDbc = (SpellRadius)dbc;
@@ -467,23 +470,38 @@ namespace SpellEditor.Sources.SpellStringTools
                         {
                             index = int.Parse(token[2].ToString());
                         }
-                        int newVal = 0;
+                        string newVal = "0";
                         if (index >= 1 && index <= 3)
                         {
-                            newVal = int.Parse(record["EffectBasePoints" + index].ToString()) + int.Parse(record["EffectDieSides" + index].ToString());
+                            var dieSides = int.Parse(record["EffectDieSides" + index].ToString());
+                            if (dieSides == 0 || dieSides == 1)
+                            {
+                                newVal = (int.Parse(record["EffectBasePoints" + index].ToString()) + dieSides).ToString();
+                            }
+                            else
+                            {
+                                var basePoints = int.Parse(record["EffectBasePoints" + index].ToString());
+                                newVal = (basePoints + 1) + " to " + (basePoints + dieSides);
+                            }
                         }
                         else if (index == 4)
                         {
+                            var sum = 0;
                             for (int i = 1; i <= 3; ++i)
                             {
-                                newVal += int.Parse(record["EffectBasePoints" + i].ToString()) + int.Parse(record["EffectDieSides" + i].ToString());
+                                sum += int.Parse(record["EffectBasePoints" + i].ToString()) + int.Parse(record["EffectDieSides" + i].ToString());
                             }
+                            newVal = sum.ToString();
                         }
-                        // Not sure why this code branch exists
-                        if (newVal < 0)
-                            newVal *= -1;
+                        // Negative values are actually shown positive
+                        // 'reduces targets movement speed by 50%'
+                        // The 50% has a value of -50 but is shown as 50
+                        if (int.TryParse(newVal, out var intVal) && intVal < 0)
+                        {
+                            newVal = (intVal *= -1).ToString();
+                        }
 
-                        str = str.Replace(token, newVal.ToString());
+                        str = str.Replace(token, newVal);
                     }
                 }
 
@@ -534,10 +552,12 @@ namespace SpellEditor.Sources.SpellStringTools
             {
                 if (!uint.TryParse(match.Value.Substring(1), out uint otherId))
                 {
-                    Console.WriteLine("Failed to parse other spell id: " + rawString);
+                    Logger.Info("Failed to parse other spell id: " + rawString);
                     return rawString;
                 }
                 var otherRecord = SpellDBC.GetRecordById(otherId, mainWindow);
+                if (otherRecord == null)
+                    return rawString;
                 int offset = match.Index + match.Value.Length;
                 bool hasPrefix = rawString.StartsWith("$");
                 rawString = rawString.Substring(match.Index + match.Value.Length);

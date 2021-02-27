@@ -1,4 +1,5 @@
-﻿using SpellEditor.Sources.Binding;
+﻿using NLog;
+using SpellEditor.Sources.Binding;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,8 @@ namespace SpellEditor.Sources.DBC
 {
     public class DBCReader
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private string _filePath;
         private long _fileSize;
         private long _filePosition;
@@ -25,6 +28,9 @@ namespace SpellEditor.Sources.DBC
         {
             if (_stringsMap == null)
                 return "";
+            if (!_stringsMap.ContainsKey(offset))
+                throw new KeyNotFoundException("A string column points to invalid data, unable to find string offset" +
+                    $" [{offset}]. This is most likely caused by a column being marked as a string where it is not a string.");
             return _stringsMap[offset].Value;
         }
 
@@ -47,7 +53,7 @@ namespace SpellEditor.Sources.DBC
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Logger.Info(e);
                 throw new Exception(e.Message);
             }
             if (handle != null)
@@ -116,6 +122,11 @@ namespace SpellEditor.Sources.DBC
                                 case BindingType.UINT:
                                     {
                                         entry.Add(field.Name, reader.ReadUInt32());
+                                        break;
+                                    }
+                                case BindingType.UINT8:
+                                    {
+                                        entry.Add(field.Name, reader.ReadByte());
                                         break;
                                     }
                                 case BindingType.FLOAT:
