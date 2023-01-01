@@ -63,10 +63,21 @@ You can copy and paste kits and effects/attachments freely. Whenever you paste i
 
 This feature is in its very early stages. Some values from the visual kit data are not handled in the UI. Other features can be added like displaying other spells using the same kit/effect/attachment or generally being able to search all existing objects.
 
+The full class model is not currently supported. The spell visual class model looks like this:
+![Spell Visual Class Model](https://i.imgur.com/o7mPR9k.png)
+
 ## Spell Visual Map
 
 I wrote a utility tool for creating a map of creatures that show the spell visuals for every spell in the game. This was useful when trying to find which spell visual I wanted to use when creating custom spells.
 
-My generated files are distributed with the releases of this program in `\WoW Spell Editor\SpellVisualMapBuilder\Export`. The program is hardcoded to use those entries and map 13. You can see this in action in the following video:
+This is now built into the spell editor. It is on the Visual, Map Builder tab. It defaults to map 13 which you can reach by running the command: `.go xyz 0 0 -15 13`
+
+You will probably need to update the template SQL statements to match your emulator structure.
+
+The files are exported to a Export folder.
 
 [![Spell Visual Map video](https://img.youtube.com/vi/lU4Nn_mRS9U/maxresdefault.jpg)](https://www.youtube.com/watch?v=lU4Nn_mRS9U)
+
+## Headless Exporter
+
+The `HeadlessExporter` code is included in this repository. A guide on how to make use of this and precompiled binaries are available on the [DBC Editing Workflow](https://github.com/stoneharry/DBC-Editing-Workflow) repository.

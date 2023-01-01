@@ -82,6 +82,7 @@
     <system:String x:Key="labRequiresSpellFocus">施法需要对象(区域):</system:String>
     <system:String x:Key="labRuneCost">符文消耗:</system:String>
     <system:String x:Key="labSpellDescriptionVariables">法术变量详细描述:</system:String>
+	<system:String x:Key="labSpellPriority">Spell Priority:</system:String>
     <system:String x:Key="labSchool">属性类型:</system:String>
     <system:String x:Key="checkboxPhysical">物理</system:String>
     <system:String x:Key="checkboxHoly">神圣</system:String>
@@ -121,6 +122,8 @@
     <system:String x:Key="labEffectBonusMultiplier2" xml:space="preserve">        效果奖励乘数(?):</system:String>
     <system:String x:Key="labDamageMultiplier3" xml:space="preserve">              伤害乘数:</system:String>
     <system:String x:Key="labEffectBonusMultiplier3" xml:space="preserve">        效果奖励乘数(?):</system:String>
+    <system:String x:Key="targetClassMaskSpells">Class Mask Target Spells:</system:String>
+    <system:String x:Key="filterClassMaskSpells">Filter Target Spells:</system:String>
     <system:String x:Key="labItemTool1">Totem 1:</system:String>
     <system:String x:Key="labItemTool2">Totem 2:</system:String>
     <system:String x:Key="labReagent1">消耗物品 1:</system:String>
@@ -247,6 +250,10 @@
 	<system:String x:Key="VisualKitSoundId">Sound ID</system:String>
 	<system:String x:Key="VisualKitShakeId">Shake ID</system:String>
 	<system:String x:Key="VisualKitFlags">Flags</system:String>
+	<system:String x:Key="VisualEffectMissileList">Missile List (right click to select)</system:String>
+	<system:String x:Key="VisualEffectMissileFilter">Filter Missile List</system:String>
+	<system:String x:Key="VisualMissileSelect">Select missile (saves immediately)</system:String>
+	<system:String x:Key="VisualEffectId">Effect ID</system:String>
 	<system:String x:Key="VisualEffectName">Effect Name</system:String>
 	<system:String x:Key="VisualEffectFilePath">Effect File Path</system:String>
 	<system:String x:Key="VisualEffectSize">Effect Size</system:String>
@@ -262,6 +269,52 @@
 	<system:String x:Key="VisualAttachOffsetPitch">Attachment Offset Pitch</system:String>
 	<system:String x:Key="VisualAttachOffsetRoll">Attachment Offset Roll</system:String>
 	<system:String x:Key="ConvertEffectToAttach">Convert Effect to Attachment</system:String>
+	<system:String x:Key="VisualMissileMotionId">Id</system:String>
+	<system:String x:Key="VisualMissileMotionName">Name</system:String>
+	<system:String x:Key="VisualMissileMotionFlags">Flags</system:String>
+	<system:String x:Key="VisualMissileMotionMissileCount">Missile Count</system:String>
+	<system:String x:Key="VisualMissileMotionScript">Script (Lua)</system:String>
+	<system:String x:Key="VisualHasMissile">Has Missile</system:String>
+	<system:String x:Key="VisualMissileModel">Missile Model</system:String>
+	<system:String x:Key="VisualMissilePathType">Missile Path Type</system:String>
+	<system:String x:Key="VisualMissileDestinationAttachment">Destination Attachment</system:String>
+	<system:String x:Key="VisualMissileSound">Missile Sound</system:String>
+	<system:String x:Key="VisualAnimEventSoundId">Animation Event Sound</system:String>
+	<system:String x:Key="VisualMissileAttachment">Missile Attachment</system:String>
+	<system:String x:Key="VisualMissileFollowGroundHeight">Follow Ground Height</system:String>
+	<system:String x:Key="VisualMissileFollowDropSpeed">Follow Drop Speed</system:String>
+	<system:String x:Key="VisualMissileFollowApproach">Follow Approach</system:String>
+	<system:String x:Key="VisualMissileFollowGroundFlags">Follow Ground Flags</system:String>
+	<system:String x:Key="VisualMissileMotion">Missile Motion</system:String>
+	<system:String x:Key="VisualMissileCastOffsetX">Missile Cast Offset X</system:String>
+	<system:String x:Key="VisualMissileCastOffsetY">Missile Cast Offset Y</system:String>
+	<system:String x:Key="VisualMissileCastOffsetZ">Missile Cast Offset Z</system:String>
+	<system:String x:Key="VisualMissileImpactOffsetX">Missile Impact Offset X</system:String>
+	<system:String x:Key="VisualMissileImpactOffsetY">Missile Impact Offset Y</system:String>
+	<system:String x:Key="VisualMissileImpactOffsetZ">Missile Impact Offset Z</system:String>
+	<system:String x:Key="MissileEntryFlags">Flags</system:String>
+	<system:String x:Key="MissileEntryDefaultPitchMin">Default Pitch Min</system:String>
+	<system:String x:Key="MissileEntryDefaultPitchMax">Default Pitch Max</system:String>
+	<system:String x:Key="MissileEntryDefaultSpeedMin">Default Speed Min</system:String>
+	<system:String x:Key="MissileEntryDefaultSpeedMax">Default Speed Max</system:String>
+	<system:String x:Key="MissileEntryGravity">Gravity</system:String>
+	<system:String x:Key="MissileEntryCollisionRadius">Collision Radius</system:String>
+	<system:String x:Key="MissileEntryRandomiseFacingMin">Randomise Facing Min</system:String>
+	<system:String x:Key="MissileEntryRandomiseFacingMax">Randomise Facing Max</system:String>
+	<system:String x:Key="MissileEntryRandomisePitchMin">Randomise Pitch Min</system:String>
+	<system:String x:Key="MissileEntryRandomisePitchMax">Randomise Pitch Max</system:String>
+	<system:String x:Key="MissileEntryRandomiseSpeedMin">Randomise Speed Min</system:String>
+	<system:String x:Key="MissileEntryRandomiseSpeedMax">Randomise Speed Max</system:String>
+	<system:String x:Key="MissileEntryMaxDuration">Max Duration</system:String>
+	<system:String x:Key="VisualSave">Save</system:String>
+	<system:String x:Key="VisualNew">New</system:String>
+	<system:String x:Key="VisualDelete">Delete</system:String>
+	<system:String x:Key="VisualBase">Base</system:String>
+	<system:String x:Key="VisualMissileModelTab">Missile Model</system:String>
+	<system:String x:Key="VisualKitsAndEffects">Kits &amp; Effects</system:String>
+	<system:String x:Key="VisualMotion">Motion</system:String>
+	<system:String x:Key="VisualScript">Script</system:String>
+	<system:String x:Key="VisualMapBuilder">Map Builder</system:String>
 	<!--#endregion-->
 	
 	<!--#region MapBuilder-->
@@ -574,6 +627,8 @@
         Test |
         Zombie |
         Metamorphosis |
+		Unknown 1 |
+		Unknown 2 |
         Undead |
         Master Angler |
         Flight (Epic) |

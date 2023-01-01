@@ -91,15 +91,29 @@ namespace SpellEditor
             customCulture.NumberFormat.NumberDecimalSeparator = ".";
             Thread.CurrentThread.CurrentCulture = customCulture;
 
+            try
+            {
+                File.Delete("debug_output.txt");
+                File.Delete("query_log.txt");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to delete debug_output.txt");
+            }
+
             // Setup logging
             var config = new LoggingConfiguration();
             var logfile = new FileTarget("logfile") { FileName = "debug_output.txt" };
+            var querylog = new FileTarget("logfile") { FileName = "query_log.txt" };
             var logconsole = new ConsoleTarget("logconsole");
             var layout = Layout.FromString("[${time}|${level:uppercase=true}|${logger}] ${message}");
+            var queryLayout = Layout.FromString("[${time}] ${message}");
             logfile.Layout = layout;
             logconsole.Layout = layout;
+            querylog.Layout = queryLayout;
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, logconsole);
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
+            config.AddRuleForOneLevel(LogLevel.Trace, querylog);
             LogManager.Configuration = config;
 
             // Banner
@@ -122,8 +136,9 @@ namespace SpellEditor
 
         void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            Logger.Info("ERROR: " + e.Exception + "\n" + e.Exception.InnerException);
-            File.WriteAllText("error.txt", e.Exception + "\n" + e.Exception.InnerException, Encoding.GetEncoding(0));
+            var errorMsg = $"ERROR: {e.Exception}\n{e.Exception.StackTrace}\n{e.Exception.InnerException}\n{e.Exception.InnerException?.StackTrace}";
+            Logger.Fatal(errorMsg);
+            File.WriteAllText("error.txt", errorMsg);
             HandleErrorMessage(e.Exception + "\n\n" + e.Exception.InnerException);
             e.Handled = true;
             Console.Out.Flush();
@@ -586,43 +601,6 @@ namespace SpellEditor
                 foreach (ThreadSafeCheckBox cb in SpellMask32.Items) { cb.Checked += HandspellFamilyClassMask_Checked; cb.Unchecked += HandspellFamilyClassMask_Checked; }
                 foreach (ThreadSafeCheckBox cb in SpellMask33.Items) { cb.Checked += HandspellFamilyClassMask_Checked; cb.Unchecked += HandspellFamilyClassMask_Checked; }
 
-
-                // TODO: This should happen when the language has been established 
-                /*
-                switch ((LocaleConstant)GetLanguage())
-                {
-                    case LocaleConstant.LOCALE_enUS:
-                        TabItem_English.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_koKR:
-                        TabItem_Korean.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_frFR:
-                        TabItem_French.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_deDE:
-                        TabItem_Deutsch.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_zhCN:
-                        TabItem_Chinese.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_zhTW:
-                        TabItem_Taiwanese.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_esES:
-                        TabItem_Mexican.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_esMX:
-                        TabItem_Portuguese.Focus();
-                        break;
-                    case LocaleConstant.LOCALE_ruRU:
-                        TabItem_Russian.Focus();
-                        break;
-                    default:
-                        break;
-                }
-                */
-
                 loadAllData();
             }
 
@@ -643,6 +621,8 @@ namespace SpellEditor
                 Mask += cb.IsChecked == true ? (uint)Math.Pow(2, i) : 0;
             }
             father.Text = Mask.ToString();
+
+            SpellMask_SelectionChanged(father, null);
         }
 
         #endregion
@@ -745,7 +725,7 @@ namespace SpellEditor
             if (WoWVersionManager.IsWotlkOrGreaterSelected)
             {
                 manager.InjectLoadedDbc("AreaGroup", new AreaGroup(((AreaTable)manager.FindDbcForBinding("AreaTable")).Lookups));
-                manager.InjectLoadedDbc("SpellDifficulty", new SpellDifficulty(adapter, GetLocale()));
+                manager.InjectLoadedDbc("SpellDifficulty", new SpellDifficulty(adapter, GetLanguage()));
             }
             manager.InjectLoadedDbc("SpellIcon", new SpellIconDBC(this, adapter));
             spellFamilyClassMaskParser = new SpellFamilyClassMaskParser(this);
@@ -781,9 +761,9 @@ namespace SpellEditor
                 catch (Exception e)
                 {
                     controller.CloseAsync();
-                    this.ShowMessageAsync(SafeTryFindResource("ERROR"),
-                       $"{SafeTryFindResource("Input_MySQL_Error")}\n{e.Message + "\n" + e.InnerException?.Message}");
-                    return;
+                    Logger.Error("ERROR: " + e.Message + "\n" + e.InnerException?.Message + "\n" + e);
+                    Dispatcher.InvokeAsync(() => this.ShowMessageAsync(SafeTryFindResource("ERROR"),
+                       $"{SafeTryFindResource("Input_MySQL_Error")}\n{e.Message + "\n" + e.InnerException?.Message}"));
                 }
             });
 
@@ -795,28 +775,28 @@ namespace SpellEditor
             {
                 await controller.CloseAsync();
                 await this.ShowMessageAsync(SafeTryFindResource("ERROR"),
-                    $"{SafeTryFindResource("LoadDBCFromBinding_Error_1")}: {e.Message}\n\n{e}\n{e.InnerException}");
+                    $"{SafeTryFindResource("LoadDBCFromBinding_Error_1")}: {e.Message}\n{e.StackTrace}\n{e.InnerException}");
                 return;
             }
             catch (SQLiteException e)
             {
                 await controller.CloseAsync();
                 await this.ShowMessageAsync(SafeTryFindResource("ERROR"),
-                    $"{SafeTryFindResource("LoadDBCFromBinding_Error_1")}: {e.Message}\n\n{e}\n{e.InnerException}");
+                    $"{SafeTryFindResource("LoadDBCFromBinding_Error_1")}: {e.Message}\n{e.StackTrace}\n{e.InnerException}");
                 return;
             }
             catch (Exception e)
             {
                 await controller.CloseAsync();
                 await this.ShowMessageAsync(SafeTryFindResource("ERROR"),
-                    $"{SafeTryFindResource("LoadDBCFromBinding_Error_1")}: {e.Message}\n\n{e}\n{e.InnerException}");
+                    $"{SafeTryFindResource("LoadDBCFromBinding_Error_1")}: {e.Message}\n{e.StackTrace}\n{e.InnerException}");
                 return;
             }
             
             try
             {
                 spellTable.Columns.Add("id", typeof(uint));
-                spellTable.Columns.Add("SpellName" + GetLocale(), typeof(string));
+                spellTable.Columns.Add("SpellName" + GetLanguage(), typeof(string));
                 spellTable.Columns.Add("Icon", typeof(uint));
 
                 // Populate UI based on DBC data
@@ -884,6 +864,39 @@ namespace SpellEditor
 
             await controller.CloseAsync();
             PopulateSelectSpell();
+
+            switch ((LocaleConstant)(GetLanguage() - 1))
+            {
+                case LocaleConstant.LOCALE_enUS:
+                    TabItem_English.Focus();
+                    break;
+                case LocaleConstant.LOCALE_koKR:
+                    TabItem_Korean.Focus();
+                    break;
+                case LocaleConstant.LOCALE_frFR:
+                    TabItem_French.Focus();
+                    break;
+                case LocaleConstant.LOCALE_deDE:
+                    TabItem_Deutsch.Focus();
+                    break;
+                case LocaleConstant.LOCALE_zhCN:
+                    TabItem_Chinese.Focus();
+                    break;
+                case LocaleConstant.LOCALE_zhTW:
+                    TabItem_Taiwanese.Focus();
+                    break;
+                case LocaleConstant.LOCALE_esES:
+                    TabItem_Mexican.Focus();
+                    break;
+                case LocaleConstant.LOCALE_esMX:
+                    TabItem_Portuguese.Focus();
+                    break;
+                case LocaleConstant.LOCALE_ruRU:
+                    TabItem_Russian.Focus();
+                    break;
+                default:
+                    break;
+            }
         }
 
         private List<Label> ConvertBoxListToLabels(List<DBCBoxContainer> boxes) => boxes.Select(entry => entry.ItemLabel()).ToList();
@@ -1015,7 +1028,7 @@ namespace SpellEditor
                 if (imageLoadEventRunning)
                     return;
                 imageLoadEventRunning = true;
-                var locale = GetLocale();
+                //var locale = GetLocale();
                 var input = FilterSpellNames.Text.ToLower();
                 var badInput = string.IsNullOrEmpty(input);
                 if (badInput && spellTable.Rows.Count == SelectSpell.Items.Count)
@@ -1034,10 +1047,7 @@ namespace SpellEditor
                         {
                             if (!(enumerator.Current is TextBlock block))
                                 continue;
-
-                            var name = block.Text;
-                            var spellName = name.Substring(name.IndexOf(' ', 4) + 1);
-                            return spellName.ToLower().Contains(input);
+                            return input.Length == 0 ? true : block.Text.ToLower().Contains(input);
                         }
                     }
                     return false;
@@ -1079,7 +1089,7 @@ namespace SpellEditor
                 if (res == MessageDialogResult.Affirmative)
                 {
                     foreach (var binding in BindingManager.GetInstance().GetAllBindings())
-                        adapter.Execute($"drop table `{binding.Name}`");
+                        adapter.Execute($"drop table `{binding.Name.ToLower()}`");
                     adapter.CreateAllTablesFromBindings();
                     PopulateSelectSpell();
                 }
@@ -1505,6 +1515,7 @@ namespace SpellEditor
                     row["ManaCostPerLevel"] = uint.Parse(ManaCostPerLevel.Text);
                     row["ManaPerSecond"] = uint.Parse(ManaCostPerSecond.Text);
                     row["ManaPerSecondPerLevel"] = uint.Parse(PerSecondPerLevel.Text);
+                    row["SpellPriority"] = int.Parse(SpellPriority.Text);
                     row["Speed"] = float.Parse(Speed.Text);
                     row["StackAmount"] = uint.Parse(Stacks.Text);
                     row["Totem1"] = uint.Parse(Totem1.Text);
@@ -1781,7 +1792,7 @@ namespace SpellEditor
                 if (uint.TryParse(text.Text.Substring(0, text.Text.IndexOf('-')).Trim(), out var id) &&
                     changedId == id)
                 {
-                    text.Text = $" { id } - { row["SpellName" + (GetLocale() - 1)] }";
+                    text.Text = $" { id } - { row["SpellName" + (GetLanguage() - 1)] }";
                     var image = panel.Children[0] as Image;
                     image.ToolTip = row["SpellIconID"].ToString();
                     image.Visibility = Visibility.Hidden;
@@ -1836,6 +1847,8 @@ namespace SpellEditor
         {
             if (storedLocale != -1)
                 return storedLocale;
+            if (adapter == null)
+                return -1;
 
             // Attempt localisation on Death Touch, HACKY
             var aboveClassic = WoWVersionManager.GetInstance().SelectedVersion().Identity > 112;
@@ -1880,7 +1893,7 @@ namespace SpellEditor
             {
                 if (worker.Adapter == null || !Config.IsInit)
                     return;
-                int locale = GetLocale();
+                int locale = GetLanguage();
                 if (locale > 0)
                     locale -= 1;
 
@@ -1940,7 +1953,7 @@ namespace SpellEditor
                     var image = stackPanel.Children[0] as Image;
                     var textBlock = stackPanel.Children[1] as TextBlock;
                     var spellName = row[1].ToString();
-                    textBlock.Text = $" {row[0]} - {spellName}";
+                    textBlock.Text = $" {row[0]} - {spellName}\n  {row[3]}";
                     var iconId = uint.Parse(row[2].ToString());
                     if (iconId <= 0)
                         continue;
@@ -1955,7 +1968,7 @@ namespace SpellEditor
             {
                 var row = collection[rowIndex];
                 var spellName = row[1].ToString();
-                var textBlock = new TextBlock {Text = $" {row[0]} - {spellName}"};
+                var textBlock = new TextBlock {Text = $" {row[0]} - {spellName}\n  {row[3]}"};
                 var image = new Image();
                 var iconId = uint.Parse(row[2].ToString());
                 //if (iconId > 0)
@@ -2013,8 +2026,8 @@ namespace SpellEditor
 
         private DataRowCollection GetSpellNames(uint lowerBound, uint pageSize, int locale)
         {
-            DataTable newSpellNames = adapter.Query(string.Format(@"SELECT `id`,`SpellName{1}`,`SpellIconID` FROM `{0}` ORDER BY `id` LIMIT {2}, {3}",
-                 "spell", locale, lowerBound, pageSize));
+            DataTable newSpellNames = adapter.Query(string.Format(@"SELECT `id`,`SpellName{1}`,`SpellIconID`,`SpellRank{2}` FROM `{0}` ORDER BY `id` LIMIT {3}, {4}",
+                 "spell", locale, locale, lowerBound, pageSize));
 
             spellTable.Merge(newSpellNames, false, MissingSchemaAction.Add);
 
@@ -2171,7 +2184,8 @@ namespace SpellEditor
             _currentVisualController = null;
             adapter.Updating = true;
             updateProgress("Querying MySQL data...");
-            DataRowCollection rowResult = adapter.Query($"SELECT * FROM `spell` WHERE `ID` = '{selectedID}'").Rows;
+            var data = adapter.Query($"SELECT * FROM `spell` WHERE `ID` = '{selectedID}'");
+            var rowResult = data.Rows;
             if (rowResult == null || rowResult.Count != 1)
                 throw new Exception("An error occurred trying to select spell ID: " + selectedID);
             var row = rowResult[0];
@@ -2535,6 +2549,15 @@ namespace SpellEditor
                 ManaCostPerLevel.ThreadSafeText = uint.Parse(row["ManaCostPerLevel"].ToString());
                 ManaCostPerSecond.ThreadSafeText = uint.Parse(row["ManaPerSecond"].ToString());
                 PerSecondPerLevel.ThreadSafeText = uint.Parse(row["ManaPerSecondPerLevel"].ToString());
+                if (data.Columns.Contains("SpellPriority"))
+                {
+                    SpellPriority.ThreadSafeText = int.Parse(row["SpellPriority"].ToString());
+                    SpellPriority.IsEnabled = true;
+                }
+                else
+                {
+                    SpellPriority.IsEnabled = false;
+                }
                 updateProgress("Updating spell range selection...");
                 var loadRanges = (SpellRange)DBCManager.GetInstance().FindDbcForBinding("SpellRange");
                 Range.ThreadSafeIndex = loadRanges.UpdateSpellRangeSelection(uint.Parse(adapter.Query(
@@ -2699,7 +2722,7 @@ namespace SpellEditor
                     SpellFamilyFlags1.ThreadSafeText = row["SpellFamilyFlags2"].ToString();
 
                     Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => 
-                        spellFamilyClassMaskParser?.UpdateSpellFamilyClassMask(this, familyName, isWotlkOrGreater)));
+                        spellFamilyClassMaskParser?.UpdateSpellFamilyClassMask(this, familyName, isWotlkOrGreater, adapter, null)));
                 }
                 else
                 {
@@ -2719,18 +2742,31 @@ namespace SpellEditor
                     SpellFamilyFlags1.ThreadSafeText = row["SpellFamilyFlags1"].ToString();
                     SpellFamilyFlags2.ThreadSafeText = row["SpellFamilyFlags2"].ToString();
 
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskA1"].ToString()), SpellMask11);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskA2"].ToString()), SpellMask21);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskA3"].ToString()), SpellMask31);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskB1"].ToString()), SpellMask12);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskB2"].ToString()), SpellMask22);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskB3"].ToString()), SpellMask32);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskC1"].ToString()), SpellMask13);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskC2"].ToString()), SpellMask23);
-                    UpdateSpellMaskCheckBox(uint.Parse(row["EffectSpellClassMaskC3"].ToString()), SpellMask33);
+                    var masks = new List<uint>
+                    {
+                        uint.Parse(row["EffectSpellClassMaskA1"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskA2"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskA3"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskB1"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskB2"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskB3"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskC1"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskC2"].ToString()),
+                        uint.Parse(row["EffectSpellClassMaskC3"].ToString())
+                    };
+
+                    UpdateSpellMaskCheckBox(masks[0], SpellMask11);
+                    UpdateSpellMaskCheckBox(masks[1], SpellMask21);
+                    UpdateSpellMaskCheckBox(masks[2], SpellMask31);
+                    UpdateSpellMaskCheckBox(masks[3], SpellMask12);
+                    UpdateSpellMaskCheckBox(masks[4], SpellMask22);
+                    UpdateSpellMaskCheckBox(masks[5], SpellMask32);
+                    UpdateSpellMaskCheckBox(masks[6], SpellMask13);
+                    UpdateSpellMaskCheckBox(masks[7], SpellMask23);
+                    UpdateSpellMaskCheckBox(masks[8], SpellMask33);
 
                     Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => 
-                        spellFamilyClassMaskParser.UpdateSpellFamilyClassMask(this, familyName, isWotlkOrGreater)));
+                        spellFamilyClassMaskParser.UpdateSpellFamilyClassMask(this, familyName, isWotlkOrGreater, GetDBAdapter(), masks)));
                 }
                 SpellFamilyFlags2.IsEnabled = isWotlkOrGreater;
                 ToggleAllSpellMaskCheckBoxes(isWotlkOrGreater);
@@ -2827,6 +2863,10 @@ namespace SpellEditor
                 SpellMissileID.IsEnabled = isWotlkOrGreater;
                 SpellDescriptionVariables.IsEnabled = isWotlkOrGreater;
                 Difficulty.IsEnabled = isWotlkOrGreater;
+
+                FilterClassMaskSpells1.IsEnabled = isWotlkOrGreater;
+                FilterClassMaskSpells2.IsEnabled = isWotlkOrGreater;
+                FilterClassMaskSpells3.IsEnabled = isWotlkOrGreater;
             }
             catch (Exception e)
             {
@@ -2836,10 +2876,12 @@ namespace SpellEditor
         }
 
         #region VisualTab
-        private void UpdateSpellVisualTab(uint selectedId, uint selectedKit = 0)
+        private void UpdateSpellVisualTab(uint selectedId, uint selectedKit = 0, bool forceRefresh = false)
         {
             SelectedVisualPath.Content = selectedId.ToString();
-            if (_currentVisualController?.VisualId == selectedId && _currentVisualController?.NextLoadAttachmentId == 0)
+            if (!forceRefresh && 
+                _currentVisualController?.VisualId == selectedId && 
+                _currentVisualController?.NextLoadAttachmentId == 0)
             {
                 return;
             }
@@ -2850,8 +2892,26 @@ namespace SpellEditor
                 controller.NextLoadAttachmentId = attachId.Value;
             }
             _currentVisualController = controller;
-            UpdateSpellVisualKitList(controller?.VisualKits, selectedKit);
-            UpdatePasteability(controller != null);
+            // FIXME(Harry): Some of these can probably be loaded in earlier versions
+            if (WoWVersionManager.IsWotlkOrGreaterSelected)
+            {
+                UpdateSpellVisualKitList(controller?.VisualKits, selectedKit);
+                UpdatePasteability(controller != null);
+                UpdateSpellVisualProperties(controller != null ? controller.VisualId : 0);
+                UpdateSpellVisualMotionEditor(controller != null ? controller.VisualId : 0);
+                UpdateSpellMissileMotionEditor(controller);
+                UpdateSpellMotionEditor(controller != null ? controller.MissileMotion : 0);
+            }
+            else
+            {
+                UpdateSpellVisualProperties(0);
+                VisualNew.IsEnabled = false;
+                UpdateSpellVisualMotionEditor(0);
+                MissileEntryNewButton.IsEnabled = false;
+                UpdateSpellMissileMotionEditor(null);
+                UpdateSpellMotionEditor(0);
+                VisualMissileNewButton.IsEnabled = false;
+            }
         }
 
         private void UpdatePasteability(bool enablePaste)
@@ -3098,7 +3158,10 @@ namespace SpellEditor
                 // Update kit to point to new effect if no attachment
                 if (!effectEntry.IsAttachment)
                 {
-                    adapter.Execute($"UPDATE spellvisualkit SET { key } = { newEffectId } WHERE ID = { effectEntry.ParentKitId }");
+                    if (kitList.SelectedItem is VisualKitListEntry selectedKitEntry)
+                        adapter.Execute($"UPDATE spellvisualkit SET { key } = { newEffectId } WHERE ID = { selectedKitEntry.KitRecord[0] }");
+                    else
+                        adapter.Execute($"UPDATE spellvisualkit SET { key } = { newEffectId } WHERE ID = { (kitList.Items.CurrentItem as VisualKitListEntry).KitRecord[0] }");
                 }
                 // If attachment update effect with new id and persist
                 else
@@ -3343,7 +3406,7 @@ namespace SpellEditor
             ToggleVisualAttachments(attachRecord != null);
             if (attachRecord != null)
             {
-                VisualAttachmentIdCombo.SelectedIndex = int.Parse(attachRecord["AttachmentId"].ToString());
+                VisualAttachmentIdCombo.SelectedIndex = (int)uint.Parse(attachRecord["AttachmentId"].ToString());
                 VisualAttachmentOffsetXTxt.Text = attachRecord["OffsetX"].ToString();
                 VisualAttachmentOffsetYTxt.Text = attachRecord["OffsetY"].ToString();
                 VisualAttachmentOffsetZTxt.Text = attachRecord["OffsetZ"].ToString();
@@ -3511,6 +3574,388 @@ namespace SpellEditor
             _currentVisualController = null;
             UpdateSpellVisualTab(selectedKit.ParentVisualId, uint.Parse(kitId));
         }
+
+        private void UpdateSpellVisualProperties(uint visualId)
+        {
+            DataRow entry = null;
+            var spellSelected = selectedID > 0;
+            if (visualId > 0)
+            {
+                using (var results = adapter.Query("SELECT HasMissile, MissileModel, MissilePathType, " +
+                    "MissileDestinationAttachment, MissileSound, AnimEventSoundId, " +
+                    "MissileAttachment, MissileFollowGroundHeight, MissileFollowDropSpeed, " +
+                    "MissileFollowApproach, MissileFollowGroundFlags, MissileMotion, " +
+                    "MissileCastOffsetX, MissileCastOffsetY, MissileCastOffsetZ, " +
+                    "MissileImpactOffsetX, MissileImpactOffsetY, MissileImpactOffsetZ " +
+                    "FROM spellvisual WHERE ID = " + visualId))
+                {
+                    if (results.Rows.Count > 0)
+                    {
+                        entry = results.Rows[0];
+                    }
+                }
+            }
+            VisualHasMissileTxt.Text = entry != null ? entry["HasMissile"].ToString() : string.Empty;
+            VisualMissileModelTxt.Text = entry != null ? entry["MissileModel"].ToString() : string.Empty;
+            VisualMissilePathTypeTxt.Text = entry != null ? entry["MissilePathType"].ToString() : string.Empty;
+            VisualMissileDestinationAttachmentTxt.Text = entry != null ? entry["MissileDestinationAttachment"].ToString() : string.Empty;
+            VisualMissileSoundTxt.Text = entry != null ? entry["MissileSound"].ToString() : string.Empty;
+            VisualAnimEventSoundIdTxt.Text = entry != null ? entry["AnimEventSoundId"].ToString() : string.Empty;
+            VisualMissileAttachmentTxt.Text = entry != null ? entry["MissileAttachment"].ToString() : string.Empty;
+            VisualMissileFollowGroundHeightTxt.Text = entry != null ? entry["MissileFollowGroundHeight"].ToString() : string.Empty;
+            VisualMissileFollowDropSpeedTxt.Text = entry != null ? entry["MissileFollowDropSpeed"].ToString() : string.Empty;
+            VisualMissileFollowApproachTxt.Text = entry != null ? entry["MissileFollowApproach"].ToString() : string.Empty;
+            VisualMissileFollowGroundFlagsTxt.Text = entry != null ? entry["MissileFollowGroundFlags"].ToString() : string.Empty;
+            VisualMissileMotionTxt.Text = entry != null ? entry["MissileMotion"].ToString() : string.Empty;
+            VisualMissileCastOffsetXTxt.Text = entry != null ? entry["MissileCastOffsetX"].ToString() : string.Empty;
+            VisualMissileCastOffsetYTxt.Text = entry != null ? entry["MissileCastOffsetY"].ToString() : string.Empty;
+            VisualMissileCastOffsetZTxt.Text = entry != null ? entry["MissileCastOffsetZ"].ToString() : string.Empty;
+            VisualMissileImpactOffsetXTxt.Text = entry != null ? entry["MissileImpactOffsetX"].ToString() : string.Empty;
+            VisualMissileImpactOffsetYTxt.Text = entry != null ? entry["MissileImpactOffsetY"].ToString() : string.Empty;
+            VisualMissileImpactOffsetZTxt.Text = entry != null ? entry["MissileImpactOffsetZ"].ToString() : string.Empty;
+            VisualHasMissileTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileModelTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissilePathTypeTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileDestinationAttachmentTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileSoundTxt.IsEnabled = entry != null && spellSelected;
+            VisualAnimEventSoundIdTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileAttachmentTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileFollowGroundHeightTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileFollowDropSpeedTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileFollowApproachTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileFollowGroundFlagsTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileMotionTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileCastOffsetXTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileCastOffsetYTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileCastOffsetZTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileImpactOffsetXTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileImpactOffsetYTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileImpactOffsetZTxt.IsEnabled = entry != null && spellSelected;
+            VisualNew.IsEnabled = entry == null && spellSelected;
+            VisualSave.IsEnabled = entry != null && spellSelected;
+        }
+
+        private void UpdateSpellVisualMotionEditor(uint visualId)
+        {
+            DataRow entry = null;
+            var spellSelected = selectedID > 0;
+            if (visualId > 0)
+            {
+                using (var results = adapter.Query("SELECT * FROM spellmissile WHERE ID = " + visualId))
+                {
+                    if (results.Rows.Count > 0)
+                    {
+                        entry = results.Rows[0];
+                    }
+                }
+            }
+            VisualMissileEntryFlagsTxt.Text = entry != null ? entry["flags"].ToString() : string.Empty;
+            VisualMissileEntryDefaultPitchMinTxt.Text = entry != null ? entry["defaultPitchMin"].ToString() : string.Empty;
+            VisualMissileEntryDefaultPitchMaxTxt.Text = entry != null ? entry["defaultPitchMax"].ToString() : string.Empty;
+            VisualMissileEntryDefaultSpeedMinTxt.Text = entry != null ? entry["defaultSpeedMin"].ToString() : string.Empty;
+            VisualMissileEntryDefaultSpeedMaxTxt.Text = entry != null ? entry["defaultSpeedMax"].ToString() : string.Empty;
+            VisualMissileEntryRandomiseFacingMinTxt.Text = entry != null ? entry["randomizeFacingMin"].ToString() : string.Empty;
+            VisualMissileEntryRandomiseFacingMaxTxt.Text = entry != null ? entry["randomizeFacingMax"].ToString() : string.Empty;
+            VisualMissileEntryRandomisePitchMinTxt.Text = entry != null ? entry["randomizePitchMin"].ToString() : string.Empty;
+            VisualMissileEntryRandomisePitchMaxTxt.Text = entry != null ? entry["randomizePitchMax"].ToString() : string.Empty;
+            VisualMissileEntryRandomiseSpeedMinTxt.Text = entry != null ? entry["randomizeSpeedMin"].ToString() : string.Empty;
+            VisualMissileEntryRandomiseSpeedMaxTxt.Text = entry != null ? entry["randomizeSpeedMax"].ToString() : string.Empty;
+            VisualMissileEntryGravityTxt.Text = entry != null ? entry["gravity"].ToString() : string.Empty;
+            VisualMissileEntryMaxDurationTxt.Text = entry != null ? entry["maxDuration"].ToString() : string.Empty;
+            VisualMissileEntryCollisionRadiusTxt.Text = entry != null ? entry["collisionRadius"].ToString() : string.Empty;
+            VisualMissileEntryFlagsTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryDefaultPitchMinTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryDefaultPitchMaxTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryDefaultSpeedMinTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryDefaultSpeedMaxTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryRandomiseFacingMinTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryRandomiseFacingMaxTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryRandomisePitchMinTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryRandomisePitchMaxTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryRandomiseSpeedMinTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryRandomiseSpeedMaxTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryGravityTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryMaxDurationTxt.IsEnabled = entry != null && spellSelected;
+            VisualMissileEntryCollisionRadiusTxt.IsEnabled = entry != null && spellSelected;
+            MissileEntryDeleteButton.IsEnabled = entry != null && spellSelected;
+            MissileEntryNewButton.IsEnabled = entry == null && spellSelected;
+            MissileEntrySaveButton.IsEnabled = entry != null && spellSelected;
+        }
+
+        private void UpdateSpellMissileMotionEditor(VisualController controller)
+        {
+            var missileModel = controller != null ? controller.MissileModel : 0;
+            DataRow missileEntry = null;
+            var spellSelected = selectedID > 0;
+            if (missileModel > 0)
+            {
+                using (var results = adapter.Query("SELECT * FROM spellvisualeffectname WHERE ID = " + missileModel))
+                {
+                    if (results.Rows.Count > 0)
+                    {
+                        missileEntry = results.Rows[0];
+                    }
+                }
+            }
+            VisualMissileEffectIdTxt.Text = missileEntry != null ? missileEntry[0].ToString() : string.Empty;
+            VisualMissileEffectNameTxt.Text = missileEntry != null ? missileEntry[1].ToString() : string.Empty;
+            VisualMissileEffectFilePathTxt.Text = missileEntry != null ? missileEntry[2].ToString() : string.Empty;
+            VisualMissileEffectAreaEffectSizeTxt.Text = missileEntry != null ? missileEntry[3].ToString() : string.Empty;
+            VisualMissileEffectScaleTxt.Text = missileEntry != null ? missileEntry[4].ToString() : string.Empty;
+            VisualMissileEffectMinAllowedScaleTxt.Text = missileEntry != null ? missileEntry[5].ToString() : string.Empty;
+            VisualMissileEffectMaxAllowedScaleTxt.Text = missileEntry != null ? missileEntry[6].ToString() : string.Empty;
+            VisualMissileEffectIdTxt.IsEnabled = missileEntry != null && spellSelected;
+            VisualMissileEffectNameTxt.IsEnabled = missileEntry != null && spellSelected;
+            VisualMissileEffectFilePathTxt.IsEnabled = missileEntry != null && spellSelected;
+            VisualMissileEffectAreaEffectSizeTxt.IsEnabled = missileEntry != null && spellSelected;
+            VisualMissileEffectScaleTxt.IsEnabled = missileEntry != null && spellSelected;
+            VisualMissileEffectMinAllowedScaleTxt.IsEnabled = missileEntry != null && spellSelected;
+            VisualMissileEffectMaxAllowedScaleTxt.IsEnabled = missileEntry != null && spellSelected;
+            if (controller == null)
+            {
+                return;
+            }
+            // Initialise effect list if not already
+            if (VisualMissileEffectList.HasItems)
+            {
+                return;
+            }
+            // Create all the labels
+            var itemSource = new List<Label>();
+            using (var results = adapter.Query("SELECT id, `name`, FilePath FROM spellvisualeffectname"))
+            {
+                foreach (DataRow row in results.Rows)
+                {
+                    var selectItem = new VisualMissileSelectMenuItem(controller.VisualId.ToString(), row[0].ToString());
+                    selectItem.Click += SelectItem_Click;
+                    var cancelItem = new MenuItem
+                    {
+                        Header = TryFindResource("VisualCancelContextMenu") ?? "Cancel"
+                    };
+                    var contextMenu = new ContextMenu();
+                    contextMenu.Items.Add(selectItem);
+                    contextMenu.Items.Add(new Separator());
+                    contextMenu.Items.Add(cancelItem);
+                    Label label = new Label
+                    {
+                        Content = $"{row[0]} - {row[1]}\r\n\t{row[2]}",
+                        ContextMenu = contextMenu
+                    };
+                    itemSource.Add(label);
+                }
+            }
+            VisualMissileEffectList.ItemsSource = itemSource;
+        }
+
+        private void UpdateSpellMotionEditor(uint motionId)
+        {
+            DataRow motionEntry = null;
+            var spellSelected = selectedID > 0;
+            if (motionId > 0)
+            {
+                using (var results = adapter.Query("SELECT * FROM spellmissilemotion WHERE ID = " + motionId))
+                {
+                    if (results.Rows.Count > 0)
+                    {
+                        motionEntry = results.Rows[0];
+                    }
+                }
+            }
+            VisualMissileMotionIdTxt.Text = motionEntry != null ? motionEntry[0].ToString() : string.Empty;
+            VisualMissileMotionNameTxt.Text = motionEntry != null ? motionEntry[1].ToString() : string.Empty;
+            VisualMissileMotionFlagsTxt.Text = motionEntry != null ? motionEntry[3].ToString() : string.Empty;
+            VisualMissileMotionMissileCountTxt.Text = motionEntry != null ? motionEntry[4].ToString() : string.Empty;
+            VisualMissileMotionScriptBox.setScript(motionEntry != null ? motionEntry[2].ToString() : string.Empty);
+            VisualMissileMotionIdTxt.IsEnabled = motionEntry != null && spellSelected;
+            VisualMissileMotionNameTxt.IsEnabled = motionEntry != null && spellSelected;
+            VisualMissileMotionFlagsTxt.IsEnabled = motionEntry != null && spellSelected;
+            VisualMissileMotionMissileCountTxt.IsEnabled = motionEntry != null && spellSelected;
+            VisualMissileMotionScriptBox.IsEnabled = motionEntry != null && spellSelected;
+            VisualMissileDeleteButton.IsEnabled = motionEntry != null && spellSelected;
+            VisualMissileNewButton.IsEnabled = motionEntry == null && spellSelected;
+            VisualMissileSaveButton.IsEnabled = motionEntry != null && spellSelected;
+        }
+
+        private void VisualMissileSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != VisualMissileSaveButton)
+                return;
+            if (_currentVisualController == null || _currentVisualController.MissileMotion <= 0)
+                return;
+            var query = "SELECT * FROM spellmissilemotion WHERE ID = " + _currentVisualController.MissileMotion;
+            using (var results = GetDBAdapter().Query(query))
+            {
+                if (results.Rows.Count > 0)
+                {
+                    var row = results.Rows[0];
+                    row.BeginEdit();
+                    row["name"] = VisualMissileMotionNameTxt.Text;
+                    row["flags"] = VisualMissileMotionFlagsTxt.Text;
+                    row["missilecount"] = VisualMissileMotionMissileCountTxt.Text;
+                    VisualMissileMotionScriptBox.SelectAll();
+                    row["script"] = VisualMissileMotionScriptBox.Selection.Text;
+                    row.EndEdit();
+                    adapter.CommitChanges(query, results);
+                    ShowFlyoutMessage($"Saved changes to SpellMissileMotion {_currentVisualController.MissileMotion}.");
+                }
+            }
+        }
+
+        private void VisualMissileNewButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != VisualMissileNewButton)
+                return;
+            if (_currentVisualController == null || _currentVisualController.VisualId <= 0)
+            {
+                ShowFlyoutMessage("This spell has no spell visual. Cannot create a SpellMissileMotion record.");
+                return;
+            }
+            if (!uint.TryParse(GetDBAdapter().QuerySingleValue("SELECT MAX(ID) FROM spellmissilemotion").ToString(), out uint newId))
+            {
+                ShowFlyoutMessage("Failed to get a new max ID from SpellMissileMotion.");
+                return;
+            }
+            ++newId;
+            // FIXME(Harry): Hardcoded for 3.3.5
+            GetDBAdapter().Execute($"INSERT INTO spellmissilemotion VALUES ({newId}, \"New Motion Script\", \"-- Hello world.\", 0, 1)");
+            _currentVisualController.MissileMotion = newId;
+            UpdateSpellVisualProperties(_currentVisualController.VisualId);
+            UpdateSpellMotionEditor(newId);
+            ShowFlyoutMessage($"Created new SpellMissileMotion {newId}.");
+        }
+
+        private void VisualMissileDeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != VisualMissileDeleteButton)
+                return;
+            if (_currentVisualController == null || _currentVisualController.VisualId <= 0)
+                return;
+            // We don't actually want to delete the spellmissilemotion entry here, just unlink it
+            GetDBAdapter().Execute($"UPDATE spellvisual SET MissileMotion = 0 WHERE ID = {_currentVisualController.VisualId}");
+            _currentVisualController.MissileMotion = 0;
+            UpdateSpellVisualProperties(_currentVisualController.VisualId);
+            UpdateSpellMotionEditor(_currentVisualController.MissileMotion);
+        }
+
+        private void MissileEntrySaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != MissileEntrySaveButton)
+                return;
+            if (_currentVisualController == null || _currentVisualController.VisualId <= 0)
+                return;
+            var query = "SELECT * FROM spellmissile WHERE ID = " + _currentVisualController.VisualId;
+            using (var results = GetDBAdapter().Query(query))
+            {
+                if (results.Rows.Count > 0)
+                {
+                    var row = results.Rows[0];
+                    row.BeginEdit();
+                    row["flags"] = VisualMissileEntryFlagsTxt.Text;
+                    row["defaultPitchMin"] = VisualMissileEntryDefaultPitchMinTxt.Text;
+                    row["defaultPitchMax"] = VisualMissileEntryDefaultPitchMaxTxt.Text;
+                    row["defaultSpeedMin"] = VisualMissileEntryDefaultSpeedMinTxt.Text;
+                    row["defaultSpeedMax"] = VisualMissileEntryDefaultSpeedMaxTxt.Text;
+                    row["randomizeFacingMin"] = VisualMissileEntryRandomiseFacingMinTxt.Text;
+                    row["randomizeFacingMax"] = VisualMissileEntryRandomiseFacingMaxTxt.Text;
+                    row["randomizePitchMin"] = VisualMissileEntryRandomisePitchMinTxt.Text;
+                    row["randomizePitchMax"] = VisualMissileEntryRandomisePitchMaxTxt.Text;
+                    row["randomizeSpeedMin"] = VisualMissileEntryRandomiseSpeedMinTxt.Text;
+                    row["randomizeSpeedMax"] = VisualMissileEntryRandomiseSpeedMaxTxt.Text;
+                    row["gravity"] = VisualMissileEntryGravityTxt.Text;
+                    row["maxDuration"] = VisualMissileEntryMaxDurationTxt.Text;
+                    row["collisionRadius"] = VisualMissileEntryCollisionRadiusTxt.Text;
+                    row.EndEdit();
+                    adapter.CommitChanges(query, results);
+                    ShowFlyoutMessage($"Saved changes to SpellMissile {_currentVisualController.VisualId}.");
+                }
+            }
+        }
+
+        private void MissileEntryNewButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != MissileEntryNewButton)
+                return;
+            if (_currentVisualController == null || _currentVisualController.VisualId <= 0)
+            {
+                ShowFlyoutMessage("This spell has no spell visual. Cannot create a SpellMissile record.");
+                return;
+            }
+            // FIXME(Harry): Hardcoded for 3.3.5
+            GetDBAdapter().Execute($"INSERT INTO spellmissile VALUES ({_currentVisualController.VisualId}, 1, 0, 0, 30, 40, 0, 0, 0, 0, 0, 0, 30, 0, 0)");
+            UpdateSpellVisualMotionEditor(_currentVisualController.VisualId);
+            ShowFlyoutMessage($"Created SpellMissile record {_currentVisualController.VisualId}.");
+        }
+
+        private void MissileEntryDeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != MissileEntryDeleteButton)
+                return;
+            if (_currentVisualController == null || _currentVisualController.VisualId <= 0)
+                return;
+            GetDBAdapter().Execute($"DELETE FROM spellmissile WHERE ID = {_currentVisualController.VisualId}");
+            UpdateSpellVisualMotionEditor(_currentVisualController.VisualId);
+        }
+
+        private void VisualSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != VisualSave)
+                return;
+            if (_currentVisualController == null || _currentVisualController.VisualId <= 0)
+                return;
+            var query = "SELECT * FROM spellvisual WHERE ID = " + _currentVisualController.VisualId;
+            using (var results = GetDBAdapter().Query(query))
+            {
+                if (results.Rows.Count > 0)
+                {
+                    var row = results.Rows[0];
+                    row.BeginEdit();
+                    row["HasMissile"] = VisualHasMissileTxt.Text;
+                    row["MissileModel"] = VisualMissileModelTxt.Text;
+                    row["MissilePathType"] = VisualMissilePathTypeTxt.Text;
+                    row["MissileDestinationAttachment"] = VisualMissileDestinationAttachmentTxt.Text;
+                    row["MissileSound"] = VisualMissileSoundTxt.Text;
+                    row["AnimEventSoundId"] = VisualAnimEventSoundIdTxt.Text;
+                    row["MissileAttachment"] = VisualMissileAttachmentTxt.Text;
+                    row["MissileFollowGroundHeight"] = VisualMissileFollowGroundHeightTxt.Text;
+                    row["MissileFollowDropSpeed"] = VisualMissileFollowDropSpeedTxt.Text;
+                    row["MissileFollowApproach"] = VisualMissileFollowApproachTxt.Text;
+                    row["MissileFollowGroundFlags"] = VisualMissileFollowGroundFlagsTxt.Text;
+                    row["MissileMotion"] = VisualMissileMotionTxt.Text;
+                    row["MissileCastOffsetX"] = VisualMissileCastOffsetXTxt.Text;
+                    row["MissileCastOffsetY"] = VisualMissileCastOffsetYTxt.Text;
+                    row["MissileCastOffsetZ"] = VisualMissileCastOffsetZTxt.Text;
+                    row["MissileImpactOffsetX"] = VisualMissileImpactOffsetXTxt.Text;
+                    row["MissileImpactOffsetY"] = VisualMissileImpactOffsetYTxt.Text;
+                    row["MissileImpactOffsetZ"] = VisualMissileImpactOffsetZTxt.Text;
+                    row.EndEdit();
+                    adapter.CommitChanges(query, results);
+                    ShowFlyoutMessage($"Saved changes to SpellVisual {_currentVisualController.VisualId}.");
+                }
+            }
+        }
+
+        private void VisualNew_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender != VisualNew)
+                return;
+            var newId = uint.Parse(adapter.QuerySingleValue("SELECT MAX(ID) FROM spellvisual").ToString()) + 1;
+            // FIXME(Harry): Hardcoded for 3.3.5
+            GetDBAdapter().Execute($"INSERT INTO spellvisual VALUES ({newId}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4294967295, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)");
+            // Link up to selected spell
+            SpellVisual1.Text = newId.ToString();
+            GetDBAdapter().Execute($"UPDATE spell SET SpellVisual1 = {newId} WHERE ID = {selectedID}");
+            UpdateSpellVisualTab(newId, 0);
+            ShowFlyoutMessage($"Created new SpellVisual record {newId}.");
+        }
+
+        private void SelectItem_Click(object sender, RoutedEventArgs e)
+        {
+            var menu = sender as VisualMissileSelectMenuItem;
+            GetDBAdapter().Execute($"UPDATE spellvisual SET MissileModel = {menu.MissileId} WHERE ID = {menu.VisualId}");
+            VisualMissileEffectList.ItemsSource = null;
+            UpdateSpellVisualTab(uint.Parse(menu.VisualId), 0, true);
+            ShowFlyoutMessage($"SpellVisual {menu.VisualId} MissileModel set to {menu.MissileId}.");
+        }
         #endregion
 
         private void UpdateSpellMaskCheckBox(uint mask, ThreadSafeComboBox comBox)
@@ -3554,10 +3999,7 @@ namespace SpellEditor
             else if (tab == VisualTab)
             {
                 var idStr = SpellVisual1.Text;
-                if (idStr.Length == 0 || !uint.TryParse(idStr, out var id))
-                {
-                    return;
-                }
+                uint.TryParse(idStr, out var id);
                 UpdateSpellVisualTab(id);
             }
         }
@@ -3894,7 +4336,7 @@ namespace SpellEditor
         public string GetSpellNameById(uint spellId)
         {
             var dr = spellTable.Select($"id = {spellId}");
-            return dr.Length == 1 ? dr[0]["SpellName" + (GetLocale() - 1)].ToString() : "";
+            return dr.Length == 1 ? dr[0]["SpellName" + (GetLanguage() - 1)].ToString() : "";
         }
         #endregion
         private void MultilingualSwitch_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -4019,6 +4461,62 @@ namespace SpellEditor
                 }
                 return false;
             };
+        }
+
+        private void VisualMissileFilter_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (e.OriginalSource != VisualMissileFilter)
+            {
+                return;
+            }
+            var filterBox = sender as TextBox;
+            var input = filterBox.Text.ToLower();
+            ICollectionView view = CollectionViewSource.GetDefaultView(VisualMissileEffectList.Items);
+            view.Filter = o => input.Length == 0 ? true : o.ToString().ToLower().Contains(input);
+        }
+
+        private void SpellMask_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!WoWVersionManager.IsWotlkOrGreaterSelected)
+                return;
+            if (!sender.ToString().Contains("SpellMask"))
+                return;
+
+            var masks = new List<uint>
+            {
+                uint.Parse(SpellMask11.Text),
+                uint.Parse(SpellMask21.Text),
+                uint.Parse(SpellMask31.Text),
+                uint.Parse(SpellMask21.Text),
+                uint.Parse(SpellMask22.Text),
+                uint.Parse(SpellMask23.Text),
+                uint.Parse(SpellMask31.Text),
+                uint.Parse(SpellMask32.Text),
+                uint.Parse(SpellMask33.Text)
+            };
+
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                spellFamilyClassMaskParser.UpdateSpellEffectMasksSelected(this, uint.Parse(SpellFamilyName.Text), GetDBAdapter(), masks)));
+        }
+
+        private void FilterClassMaskSpells_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ListBox targetBox;
+            if (sender == FilterClassMaskSpells1)
+                targetBox = EffectTargetSpellsList1;
+            else if (sender == FilterClassMaskSpells2)
+                targetBox = EffectTargetSpellsList2;
+            else if (sender == FilterClassMaskSpells3)
+                targetBox = EffectTargetSpellsList3;
+            else
+            {
+                Logger.Error($"Unable to find target box to Class Mask Filter: {sender}");
+                return;
+            }
+            var filterBox = sender as ThreadSafeTextBox;
+            var input = filterBox.Text.ToLower();
+            ICollectionView view = CollectionViewSource.GetDefaultView(targetBox.Items);
+            view.Filter = o => input.Length == 0 ? true : o.ToString().ToLower().Contains(input);
         }
 
         private string SafeTryFindResource(object key)
