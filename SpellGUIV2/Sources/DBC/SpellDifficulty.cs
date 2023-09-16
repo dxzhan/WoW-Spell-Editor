@@ -60,7 +60,7 @@ namespace SpellEditor.Sources.DBC
                 var watch = new Stopwatch();
                 watch.Start();
                 Logger.Debug("Loading SpellDifficulty tooltips lazily");
-                var column = "SpellName" + (locale - 1);
+                var column = "SpellName" + Math.Max(0, locale - 1);
                 for (int i = 1; i < Lookups.Count; ++i)
                 {
                     if (cancelToken.IsCancellationRequested)
@@ -102,7 +102,7 @@ namespace SpellEditor.Sources.DBC
                 // we have extracted the lookup tables. Nulling it out may help with
                 // memory consumption.
                 Reader = null;
-                Body = null;
+                Body.RecordMaps = null;
             });
         }
 

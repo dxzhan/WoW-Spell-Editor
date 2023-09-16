@@ -125,6 +125,26 @@ namespace SpellEditor.Sources.Config
             }
         }
 
+        public static string DefaultMpqName
+        {
+            get { return GetConfigValue("DefaultMpqName"); }
+            set
+            {
+                UpdateConfigValue("DefaultMpqName", value);
+                Save();
+            }
+        }
+
+        public static string SqlMapperDirectory
+        {
+            get { return GetConfigValue("SqlMapperDirectory"); }
+            set
+            {
+                UpdateConfigValue("SqlMapperDirectory", value);
+                Save();
+            }
+        }
+
         public static ConnectionType connectionType = ConnectionType.SQLite;
 
         private static void CreateXmlFile()
@@ -184,6 +204,11 @@ namespace SpellEditor.Sources.Config
             if (WoWVersion.Length == 0)
             {
                 WoWVersion = WoWVersionManager.GetInstance().LookupVersion(WoWVersionManager.DefaultVersionString).Version;
+            }
+
+            if (SqlMapperDirectory.Length == 0)
+            {
+                SqlMapperDirectory = Environment.CurrentDirectory + "\\SqlMap\\AzerothCore";
             }
         }
 

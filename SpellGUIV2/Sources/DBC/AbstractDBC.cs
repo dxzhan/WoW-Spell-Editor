@@ -1,7 +1,9 @@
 ﻿using NLog;
+
 using SpellEditor.Sources.Binding;
 using SpellEditor.Sources.Database;
 using SpellEditor.Sources.VersionControl;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -19,9 +21,9 @@ namespace SpellEditor.Sources.DBC
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private string _filePath;
-        protected DBCHeader Header;
-        protected DBCBody Body;
-        protected DBCReader Reader;
+        public DBCHeader Header;
+        public DBCBody Body;
+        public DBCReader Reader;
 
         protected void ReadDBCFile(string filePath)
         {
@@ -38,7 +40,6 @@ namespace SpellEditor.Sources.DBC
             var headerWatch = new Stopwatch();
             var bodyWatch = new Stopwatch();
             var stringWatch = new Stopwatch();
-            Body = new DBCBody();
             Reader = new DBCReader(_filePath);
             // Header
             headerWatch.Start();
@@ -46,7 +47,7 @@ namespace SpellEditor.Sources.DBC
             headerWatch.Stop();
             // Body
             bodyWatch.Start();
-            Reader.ReadDBCRecords(Body, name);
+            Reader.ReadDBCRecords(ref Body, name);
             bodyWatch.Stop();
             // Strings
             stringWatch.Start();
@@ -74,119 +75,17 @@ namespace SpellEditor.Sources.DBC
             return null;
         }
 
-        public Task ImportToSql(IDatabaseAdapter adapter, MainWindow.UpdateProgressFunc UpdateProgress, string IdKey, string bindingName)
+        public Task ImportTo(IDatabaseAdapter adapter, MainWindow.UpdateProgressFunc UpdateProgress, string IdKey, string bindingName, ImportExportType _type)
         {
-            return Task.Run(() =>
-            {
-                var binding = BindingManager.GetInstance().FindBinding(bindingName);
-                adapter.Execute(string.Format(adapter.GetTableCreateString(binding), binding.Name.ToLower()));
-                uint currentRecord = 0;
-                uint count = Header.RecordCount;
-                uint updateRate = count < 100 ? 100 : count / 100;
-                uint index = 0;
-                StringBuilder q = null;
-                foreach (var recordMap in Body.RecordMaps)
-                {
-                    // This might be needed? Disabled unless bugs are reported around this
-                    //if (r.record.ID == 0)
-                    //  continue;
-                    if (index == 0 || index % 250 == 0)
-                    {
-                        if (q != null)
-                        {
-                            q.Remove(q.Length - 2, 2);
-                            adapter.Execute(q.ToString());
-                        }
-                        q = new StringBuilder();
-                        q.Append(string.Format("INSERT INTO `{0}` VALUES ", bindingName.ToLower()));
-                    }
-                    if (++index % updateRate == 0)
-                    {
-                        // Visual studio says these casts are redundant but it does not work without them
-                        double percent = (double)index / (double)count;
-                        UpdateProgress(percent);
-                    }
-                    currentRecord = recordMap.ContainsKey(IdKey) ? (uint)recordMap[IdKey] : 0;
-                    q.Append("(");
-                    foreach (var field in binding.Fields)
-                    {
-                        switch (field.Type)
-                        {
-                            case BindingType.INT:
-                            case BindingType.UINT:
-                            case BindingType.UINT8:
-                                {
-                                    q.Append(string.Format("'{0}', ", recordMap[field.Name]));
-                                    break;
-                                }
-                            case BindingType.FLOAT:
-                            case BindingType.DOUBLE:
-                                {
-                                    q.Append(string.Format("REPLACE('{0}', ',', '.'), ", recordMap[field.Name]));
-                                    break;
-                                }
-                            case BindingType.STRING_OFFSET:
-                                {
-                                    var strOffset = (uint)recordMap[field.Name];
-                                    var lookupResult = Reader.LookupStringOffset(strOffset);
-                                    q.Append(string.Format("'{0}', ", adapter.EscapeString(lookupResult)));
-                                    break;
-                                }
-                            case BindingType.UNKNOWN:
-                                break;
-                            default:
-                                throw new Exception($"ERROR: Record[{currentRecord}] Unhandled type: {field.Type} on field: {field.Name}");
-                        }
-                    }
-                    q.Remove(q.Length - 2, 2);
-                    q.Append("), ");
-                }
-                if (q.Length > 0)
-                {
-                    q.Remove(q.Length - 2, 2);
-                    adapter.Execute(q.ToString());
-                }
-                // We have attempted to import the Spell.dbc so clean up unneeded data
-                // This will be recreated if the import process is started again
-                Reader.CleanStringsMap();
-            });
+            return StorageFactory.Instance.GetStorageAdapter(_type).Import(adapter, this, UpdateProgress, IdKey, bindingName);
         }
 
-        public Task ExportToDbc(IDatabaseAdapter adapter, MainWindow.UpdateProgressFunc updateProgress, string IdKey, string bindingName)
+        public Task ExportTo(IDatabaseAdapter adapter, MainWindow.UpdateProgressFunc updateProgress, string IdKey, string bindingName, ImportExportType _type)
         {
-            return Task.Run(() =>
-            {
-                var binding = BindingManager.GetInstance().FindBinding(bindingName);
-                if (binding == null)
-                    throw new Exception("Binding not found: " + bindingName);
-                var body = new DBCBodyToSerialize();
-
-                var orderClause = "";
-                if (binding.OrderOutput)
-                {
-                    orderClause = binding.Fields.FirstOrDefault(f => f.Name.Equals(IdKey)) != null ? $" ORDER BY `{IdKey}`" : "";
-                }
-
-                body.Records = LoadRecords(adapter, bindingName, orderClause, updateProgress);
-                var numRows = body.Records.Count();
-                if (numRows == 0)
-                    throw new Exception("No rows to export");
-
-                Header = new DBCHeader
-                {
-                    FieldCount = (uint)binding.Fields.Count(),
-                    // Magic is always 'WDBC' https://wowdev.wiki/DBC
-                    Magic = 1128416343,
-                    RecordCount = (uint)numRows,
-                    RecordSize = (uint)binding.CalcRecordSize(),
-                    StringBlockSize = body.GenerateStringOffsetsMap(binding)
-                };
-
-                SaveDbcFile(updateProgress, body, binding);
-            });
+            return StorageFactory.Instance.GetStorageAdapter(_type).Export(adapter, this, updateProgress, IdKey, bindingName);
         }
 
-        protected List<Dictionary<string, object>> LoadRecords(IDatabaseAdapter adapter, string bindingName, string orderClause, MainWindow.UpdateProgressFunc updateProgress)
+        public List<Dictionary<string, object>> LoadRecords(IDatabaseAdapter adapter, string bindingName, string orderClause, MainWindow.UpdateProgressFunc updateProgress)
         {
             const int pageSize = 1000;
             int totalCount;
@@ -201,8 +100,10 @@ namespace SpellEditor.Sources.DBC
             {
                 lowerBounds += pageSize;
                 // Visual studio says these casts are redundant but it does not work without them
-                double percent = (double)Math.Min(totalCount, lowerBounds) / (double)totalCount;
-                updateProgress(percent);
+                double percent = ((double)Math.Min(totalCount, lowerBounds) / (double)totalCount);
+                // Report 0 .. 0.8 only
+                updateProgress(percent * 0.8);
+
                 var page = LoadRecordPage(lowerBounds, pageSize, adapter, bindingName, orderClause);
                 loadCount = page.Count;
                 page.ForEach(results.Add);
@@ -223,7 +124,7 @@ namespace SpellEditor.Sources.DBC
             return records;
         }
 
-        protected void SaveDbcFile(MainWindow.UpdateProgressFunc updateProgress, DBCBodyToSerialize body, Binding.Binding binding)
+        public void SaveDbcFile(MainWindow.UpdateProgressFunc updateProgress, DBCBodyToSerialize body, Binding.Binding binding)
         {
             string path = $"Export/{binding.Name}.dbc";
             Directory.CreateDirectory(Path.GetDirectoryName(path));
@@ -247,7 +148,8 @@ namespace SpellEditor.Sources.DBC
                         {
                             // Visual studio says these casts are redundant but it does not work without them
                             double percent = (double)i / (double)Header.RecordCount;
-                            updateProgress(percent);
+                            // Report 0.8 .. 1.0 only
+                            updateProgress((percent * 0.2) + 0.8);
                         }
                         var record = body.Records[i];
                         foreach (var entry in binding.Fields)
@@ -347,7 +249,7 @@ namespace SpellEditor.Sources.DBC
 
         public bool HasData()
         {
-            return Body != null && Body.RecordMaps != null && Body.RecordMaps.Count() > 0;
+            return Body.RecordMaps != null && Body.RecordMaps.Count() > 0;
         }
 
         public struct DBCHeader
@@ -359,50 +261,13 @@ namespace SpellEditor.Sources.DBC
             public int StringBlockSize;
         };
 
-        public class DBCBody
+        public struct DBCBody
         {
             // Column Name -> Column Value
             public Dictionary<string, object>[] RecordMaps;
-        };
-
-        protected class DBCBodyToSerialize
-        {
-            public List<Dictionary<string, object>> Records;
-            public Dictionary<int, int> OffsetStorage;
-            public Dictionary<int, string> ReverseStorage;
-
-            // Returns new header stringBlockOffset
-            public int GenerateStringOffsetsMap(Binding.Binding binding)
-            {
-                // Start at 1 as 0 is hardcoded as '\0'
-                int stringBlockOffset = 1;
-                // Performance gain by collecting the fields to iterate first
-                var fields = binding.Fields.Where(field => field.Type == BindingType.STRING_OFFSET).ToArray();
-                OffsetStorage = new Dictionary<int, int>();
-                ReverseStorage = new Dictionary<int, string>();
-                // Populate string <-> offset lookup maps
-                for (int i = 0; i < Records.Count; ++i)
-                {
-                    foreach (var entry in fields)
-                    {
-                        var record = Records.ElementAt(i);
-                        string str = record[entry.Name].ToString();
-                        if (str.Length == 0)
-                            continue;
-                        var key = str.GetHashCode();
-                        if (!OffsetStorage.ContainsKey(key))
-                        {
-                            OffsetStorage.Add(key, stringBlockOffset);
-                            ReverseStorage.Add(stringBlockOffset, str);
-                            stringBlockOffset += Encoding.UTF8.GetByteCount(str) + 1;
-                        }
-                    }
-                }
-                return stringBlockOffset;
-            }
         }
 
-        public class VirtualStrTableEntry
+        public struct VirtualStrTableEntry
         {
             public string Value;
             public uint NewValue;

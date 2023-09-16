@@ -3,7 +3,7 @@ WoW Spell Editor
 
 This is a spell editor designed to be used for WoW versions 3.3.5, 2.4.3, or 1.12.1. It also supports importing and exporting of any patch version DBC to and from SQL with the use of text file bindings found in the `Bindings` directory.
 
-![Spell Editor Image 3.3.5a](https://i.imgur.com/Vpv4WcO.png)
+![Spell Editor Image 3.3.5a](https://i.imgur.com/DkpvfCH.png)
 
 Downloads can be found in the releases section, please report any issues you find and I will look at them when I get a chance.
 
@@ -14,6 +14,10 @@ The editing process is to import your `spell.dbc` into SQL, and then you can edi
 Config changes require a program restart to take effect.
 
 Enjoy.
+
+## Video tutorial
+
+https://www.youtube.com/watch?v=oM4AU0KMuw0
 
 ## Brief Guide
 
