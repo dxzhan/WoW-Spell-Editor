@@ -3,7 +3,6 @@ using SpellEditor.Sources.Controls.Common;
 using SpellEditor.Sources.Controls.SpellSelectList;
 using SpellEditor.Sources.Database;
 using SpellEditor.Sources.Locale;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -26,13 +25,18 @@ namespace SpellEditor.Sources.Controls
         private int _Language;
         private IDatabaseAdapter _Adapter;
         private readonly DataTable _Table = new DataTable();
+        private bool _initialised = false;
 
         public void Initialise()
         {
             _Table.Columns.Add("id", typeof(uint));
             _Table.Columns.Add("SpellName" + _Language, typeof(string));
             _Table.Columns.Add("Icon", typeof(uint));
+            _initialised = true;
         }
+
+        public bool IsInitialised() => _initialised;
+        public bool HasAdapter() => _Adapter != null;
 
         public SpellSelectionList SetLanguage(int language)
         { 
@@ -57,64 +61,68 @@ namespace SpellEditor.Sources.Controls
         public void PopulateSelectSpell(bool clearData = true)
         {
             if (_Adapter == null)
-                throw new Exception("Adapter has not been configured");
+                return;
             if (_Table.Columns.Count == 0)
-                throw new Exception("Initialise has not been invoked");
+                return;
 
             // Refresh language
             LocaleManager.Instance.MarkDirty();
-            var newLocale = LocaleManager.Instance.GetLocale(_Adapter);
-            if (newLocale != _Language)
+
+            using (var adapter = AdapterFactory.Instance.GetAdapter(false))
             {
-                _Table.Columns["SpellName" + _Language].ColumnName = "SpellName" + newLocale;
-                SetLanguage(newLocale);
+                var newLocale = LocaleManager.Instance.GetLocale(adapter);
+                if (newLocale != _Language && (newLocale != -1 || _Language == -1))
+                {
+                    _Table.Columns["SpellName" + _Language].ColumnName = "SpellName" + newLocale;
+                    SetLanguage(newLocale);
+                }
+
+                var selectSpellWatch = new Stopwatch();
+                selectSpellWatch.Start();
+                _ContentsIndex = 0;
+                _ContentsCount = Items.Count;
+                var worker = new SpellListQueryWorker(adapter, selectSpellWatch) { WorkerReportsProgress = true };
+                worker.ProgressChanged += _worker_ProgressChanged;
+
+                worker.DoWork += delegate
+                {
+                    // Validate
+                    if (worker.Adapter == null || !Config.Config.IsInit)
+                        return;
+                    int locale = _Language;
+                    if (locale > 0)
+                        locale -= 1;
+
+                    // Clear Data
+                    if (clearData)
+                        _Table.Rows.Clear();
+
+                    const uint pageSize = 5000;
+                    uint lowerBounds = 0;
+                    DataRowCollection results = GetSpellNames(lowerBounds, 100, locale);
+                    lowerBounds += 100;
+                    // Edge case of empty table after truncating, need to send a event to the handler
+                    if (results != null && results.Count == 0)
+                    {
+                        worker.ReportProgress(0, results);
+                    }
+                    while (results != null && results.Count != 0)
+                    {
+                        worker.ReportProgress(0, results);
+                        results = GetSpellNames(lowerBounds, pageSize, locale);
+                        lowerBounds += pageSize;
+                    }
+                };
+                worker.RunWorkerAsync();
+                worker.RunWorkerCompleted += (sender, args) =>
+                {
+                    if (!(sender is SpellListQueryWorker spellListQueryWorker))
+                        return;
+
+                    spellListQueryWorker.Watch.Stop();
+                    Logger.Info($"Loaded spell selection list contents in {spellListQueryWorker.Watch.ElapsedMilliseconds}ms");
+                };
             }
-
-            var selectSpellWatch = new Stopwatch();
-            selectSpellWatch.Start();
-            _ContentsIndex = 0;
-            _ContentsCount = Items.Count;
-            var worker = new SpellListQueryWorker(_Adapter, selectSpellWatch) { WorkerReportsProgress = true };
-            worker.ProgressChanged += _worker_ProgressChanged;
-
-            worker.DoWork += delegate
-            {
-                // Validate
-                if (worker.Adapter == null || !Config.Config.IsInit)
-                    return;
-                int locale = _Language;
-                if (locale > 0)
-                    locale -= 1;
-
-                // Clear Data
-                if (clearData)
-                    _Table.Rows.Clear();
-
-                const uint pageSize = 5000;
-                uint lowerBounds = 0;
-                DataRowCollection results = GetSpellNames(lowerBounds, 100, locale);
-                lowerBounds += 100;
-                // Edge case of empty table after truncating, need to send a event to the handler
-                if (results != null && results.Count == 0)
-                {
-                    worker.ReportProgress(0, results);
-                }
-                while (results != null && results.Count != 0)
-                {
-                    worker.ReportProgress(0, results);
-                    results = GetSpellNames(lowerBounds, pageSize, locale);
-                    lowerBounds += pageSize;
-                }
-            };
-            worker.RunWorkerAsync();
-            worker.RunWorkerCompleted += (sender, args) =>
-            {
-                if (!(sender is SpellListQueryWorker spellListQueryWorker))
-                    return;
-
-                spellListQueryWorker.Watch.Stop();
-                Logger.Info($"Loaded spell selection list contents in {spellListQueryWorker.Watch.ElapsedMilliseconds}ms");
-            };
         }
 
         public void AddNewSpell(uint copyFrom, uint copyTo)
